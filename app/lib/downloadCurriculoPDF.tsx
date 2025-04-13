@@ -11,10 +11,10 @@ export async function downloadCurriculoPDF() {
   const experiences = state.resume.workExperiences;
   const skills = state.resume.skills;
 
-
+  // Agora só usamos profile.name (em vez de profile.firstName / profile.lastName):
   const blob = await pdf(
     <CurriculoPDF
-      fullName={`${profile.firstName} ${profile.lastName}`}
+      fullName={profile.name}
       email={profile.email}
       experiences={experiences.map((exp) => ({
         title: exp.title,
