@@ -32,8 +32,30 @@ export const ResumeForm = () => {
   const [qrCode, setQrCode] = useState("");
   const [pixCode, setPixCode] = useState("");
   const [copied, setCopied] = useState(false);
+  const [erro, setErro] = useState("");
 
   const formsOrder = useAppSelector(selectFormsOrder);
+
+  const gerarPix = async () => {
+    setErro("");
+    setCopied(false);
+    try {
+      const res = await fetch("https://api-gerencianet.onrender.com/pagar");
+      const data = await res.json();
+
+      if (!data.imagem_base64 || !data.qr_code) {
+        setErro("Não foi possível gerar o PIX. Tente novamente.");
+        return;
+      }
+
+      setQrCode(data.imagem_base64);
+      setPixCode(data.qr_code);
+      navigator.clipboard.writeText(data.qr_code);
+      setCopied(true);
+    } catch (err) {
+      setErro("Erro ao se conectar com a API. Verifique sua conexão.");
+    }
+  };
 
   return (
     <div
@@ -44,7 +66,7 @@ export const ResumeForm = () => {
       onMouseOver={() => setIsHover(true)}
       onMouseLeave={() => setIsHover(false)}
     >
-      <section className="flex flex-col max-w-2xl gap-8 p-[var(--resume-padding)]">
+      <section className="flex flex-col max-w-2xl gap-8 p-[var(--resume-padding)] pb-24">
         <ProfileForm />
         {formsOrder.map((form) => {
           const Component = formTypeToComponent[form];
@@ -54,26 +76,17 @@ export const ResumeForm = () => {
 
         <div className="flex flex-col items-center gap-4 mt-6 mb-20">
           <button
-            onClick={async () => {
-              try {
-                const res = await fetch("https://api-gerencianet.onrender.com/pagar");
-                const data = await res.json();
-                setQrCode(data.imagem_base64);
-                setPixCode(data.qr_code);
-                navigator.clipboard.writeText(data.qr_code);
-                setCopied(true);
-              } catch (err) {
-                console.error("Erro ao gerar PIX", err);
-              }
-            }}
+            onClick={gerarPix}
             className="bg-gradient-to-r from-pink-500 to-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90"
           >
             Gerar PIX
           </button>
 
-          {qrCode && (
+          {erro && <p className="text-red-600 font-semibold">{erro}</p>}
+
+          {qrCode && pixCode && (
             <div className="text-center">
-              <img src={qrCode} alt="QR Code PIX" className="mx-auto" />
+              <img src={qrCode} alt="QR Code PIX" className="mx-auto max-w-[250px]" />
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(pixCode);
@@ -84,7 +97,9 @@ export const ResumeForm = () => {
                 Copiar código Pix Copia e Cola
               </button>
               {copied && (
-                <p className="text-green-600 mt-1">Código copiado com sucesso!</p>
+                <p className="text-green-600 mt-1">
+                  Código copiado com sucesso!
+                </p>
               )}
             </div>
           )}
