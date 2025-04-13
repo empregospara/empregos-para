@@ -1,3 +1,5 @@
+// app/lib/redux/types.ts
+
 export interface ResumeProfile {
   name: string;
   email: string;
@@ -52,3 +54,12 @@ export interface Resume {
 }
 
 export type ResumeKey = keyof Resume;
+
+/**
+ * Se você precisar de um handleChange genérico que trate tanto
+ * campos string quanto arrays de 'descriptions', adicione novamente
+ * este tipo:
+ */
+export type CreateHandleChangeArgsWithDescriptions<T> =
+  | [field: Exclude<keyof T, "descriptions">, value: string]
+  | [field: "descriptions", value: string[]];
