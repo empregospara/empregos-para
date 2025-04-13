@@ -21,7 +21,7 @@ export async function downloadCurriculoPDF() {
         company: exp.company,
         period: exp.date,
       }))}
-      skills={skills.map((s) => s.name)}
+      skills={skills.featuredSkills.map((fs) => fs.skill)}
     />
   ).toBlob();
 
