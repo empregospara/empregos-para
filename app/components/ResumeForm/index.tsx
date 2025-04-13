@@ -32,7 +32,7 @@ export const ResumeForm = () => {
   const [qrCode, setQrCode] = useState("");
   const [pixCode, setPixCode] = useState("");
   const [copied, setCopied] = useState(false);
-  const [txid, setTxid] = useState("");
+  const [txid, setTxid] = useState(() => localStorage.getItem("pix_txid") || "");
   const [pago, setPago] = useState(false);
 
   const formsOrder = useAppSelector(selectFormsOrder);
