@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import { cx } from "@/app/lib/cx";
 import {
@@ -44,7 +44,7 @@ export const ResumeForm = () => {
       onMouseOver={() => setIsHover(true)}
       onMouseLeave={() => setIsHover(false)}
     >
-      <section className="flex flex-col max-w-2xl gap-8 p-[var(--resume-padding)] mb-10">
+      <section className="flex flex-col max-w-2xl gap-8 p-[var(--resume-padding)]">
         <ProfileForm />
         {formsOrder.map((form) => {
           const Component = formTypeToComponent[form];
@@ -52,16 +52,15 @@ export const ResumeForm = () => {
         })}
         <ThemeForm />
 
-        {/* PIX */}
-        <div className="flex flex-col items-center gap-4 mt-4">
+        <div className="flex flex-col items-center gap-4 mt-6 mb-20">
           <button
             onClick={async () => {
               try {
                 const res = await fetch("https://api-gerencianet.onrender.com/pagar");
                 const data = await res.json();
-                navigator.clipboard.writeText(data.pixCopiaECola);
                 setQrCode(data.imagem_base64);
-                setPixCode(data.pixCopiaECola);
+                setPixCode(data.qr_code);
+                navigator.clipboard.writeText(data.qr_code);
                 setCopied(true);
               } catch (err) {
                 console.error("Erro ao gerar PIX", err);
