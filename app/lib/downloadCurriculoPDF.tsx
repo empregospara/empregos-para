@@ -17,7 +17,7 @@ export async function downloadCurriculoPDF() {
       fullName={profile.name}
       email={profile.email}
       experiences={experiences.map((exp) => ({
-        title: exp.title,
+        title: exp.jobTitle,
         company: exp.company,
         period: exp.date,
       }))}
