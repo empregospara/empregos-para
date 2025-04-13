@@ -1,4 +1,4 @@
-'use client';
+'use client'
 
 import { cx } from "@/app/lib/cx";
 import {
@@ -36,29 +36,6 @@ export const ResumeForm = () => {
 
   const formsOrder = useAppSelector(selectFormsOrder);
 
-  const gerarPix = async () => {
-    try {
-      setCopied(false);
-      setError("");
-
-      const res = await fetch("https://api-gerencianet.onrender.com/pagar");
-      const data = await res.json();
-
-      if (!data || !data.qr_code) {
-        throw new Error("Resposta inválida da API");
-      }
-
-      setQrCode(data.qr_code);
-      setPixCode(data.qr_code); // usando diretamente o qr_code como Pix Copia e Cola (caso a API não separe)
-
-      await navigator.clipboard.writeText(data.qr_code);
-      setCopied(true);
-    } catch (err) {
-      console.error("Erro ao gerar PIX", err);
-      setError("Não foi possível gerar o PIX. Tente novamente.");
-    }
-  };
-
   return (
     <div
       className={cx(
@@ -68,7 +45,7 @@ export const ResumeForm = () => {
       onMouseOver={() => setIsHover(true)}
       onMouseLeave={() => setIsHover(false)}
     >
-      <section className="flex flex-col max-w-2xl gap-8 p-[var(--resume-padding)] pb-32">
+      <section className="flex flex-col max-w-2xl gap-8 p-[var(--resume-padding)] mb-10">
         <ProfileForm />
         {formsOrder.map((form) => {
           const Component = formTypeToComponent[form];
@@ -76,19 +53,33 @@ export const ResumeForm = () => {
         })}
         <ThemeForm />
 
+        {/* Novo botão de gerar PIX + QR Code */}
         <div className="flex flex-col items-center gap-4 mt-8">
           <button
-            onClick={gerarPix}
+            onClick={async () => {
+              try {
+                setCopied(false);
+                setError("");
+                const res = await fetch("https://api-gerencianet.onrender.com/pagar");
+                const data = await res.json();
+                setQrCode(data.imagem_base64);
+                setPixCode(data.qr_code);
+              } catch (err) {
+                setError("Não foi possível gerar o PIX. Tente novamente.");
+                setQrCode("");
+                setPixCode("");
+              }
+            }}
             className="bg-gradient-to-r from-pink-500 to-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90"
           >
             Gerar PIX
           </button>
 
-          {error && <p className="text-red-600 font-medium">{error}</p>}
+          {error && <p className="text-red-600 font-bold">{error}</p>}
 
-          {qrCode && pixCode && (
+          {qrCode && (
             <div className="text-center">
-              <img src={qrCode} alt="QR Code PIX" className="mx-auto max-w-[250px]" />
+              <img src={qrCode} alt="QR Code PIX" className="mx-auto" />
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(pixCode);
@@ -98,9 +89,7 @@ export const ResumeForm = () => {
               >
                 Copiar código Pix Copia e Cola
               </button>
-              {copied && (
-                <p className="text-green-600 mt-1">Código copiado com sucesso!</p>
-              )}
+              {copied && <p className="text-green-600 mt-1">Código copiado com sucesso!</p>}
             </div>
           )}
         </div>
