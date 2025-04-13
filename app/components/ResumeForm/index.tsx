@@ -37,13 +37,16 @@ export const ResumeForm = () => {
 
   const formsOrder = useAppSelector(selectFormsOrder);
 
+  // verificar se já existe txid salvo
   useEffect(() => {
-    if (!txid) return;
+    const storedTxid = localStorage.getItem("pix_txid");
+    if (!storedTxid) return;
+
     const interval = setInterval(async () => {
       const res = await fetch("https://api-gerencianet.onrender.com/check-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ txid }),
+        body: JSON.stringify({ txid: storedTxid }),
       });
       const data = await res.json();
       if (data.paid) {
@@ -51,8 +54,9 @@ export const ResumeForm = () => {
         clearInterval(interval);
       }
     }, 5000);
+
     return () => clearInterval(interval);
-  }, [txid]);
+  }, []);
 
   return (
     <div
@@ -83,6 +87,7 @@ export const ResumeForm = () => {
               setQrCode(data.qrCodeBase64);
               setPixCode(data.pixString);
               setTxid(data.txid);
+              localStorage.setItem("pix_txid", data.txid); // salva txid
             }}
             className="bg-gradient-to-r from-pink-500 to-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90"
           >
