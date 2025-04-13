@@ -14,7 +14,7 @@ export async function downloadCurriculoPDF() {
 
   const blob = await pdf(
     <CurriculoPDF
-      fullName={profile.fullName}
+      fullName={`${profile.firstName} ${profile.lastName}`}
       email={profile.email}
       experiences={experiences.map((exp) => ({
         title: exp.title,
