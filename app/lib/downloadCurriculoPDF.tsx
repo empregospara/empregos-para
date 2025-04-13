@@ -7,9 +7,10 @@ import { store } from "@/app/lib/redux/store";
 
 export async function downloadCurriculoPDF() {
   const state = store.getState();
-  const profile = state.profile;
-  const experiences = state.workExperiences.items;
-  const skills = state.skills.items;
+  const profile = state.resume.profile;
+  const experiences = state.resume.workExperiences.items;
+  const skills = state.resume.skills.items;
+
 
   const blob = await pdf(
     <CurriculoPDF
