@@ -1,15 +1,30 @@
+// app/components/ResumeForm/ProfileForm.tsx
+
+import React from "react";
 import { useAppDispatch, useAppSelector } from "@/app/lib/redux/hooks";
 import { changeProfile, selectProfile } from "@/app/lib/redux/resumeSlice";
 import { BaseForm } from "./Form";
 import { Input } from "./Form/InputGroup";
-import { ResumeProfile } from "@/app/lib/redux/types";
+
+// Se quiser deixar tudo em UM arquivo, pode declarar o tipo aqui mesmo.
+// Caso já tenha em outro lugar, basta remover daqui:
+interface ResumeProfile {
+  name: string;
+  summary: string;
+  email: string;
+  phone: string;
+  url: string;
+  location: string;
+}
 
 export const ProfileForm = () => {
-  const profile = useAppSelector(selectProfile);
   const dispatch = useAppDispatch();
+  const profile = useAppSelector(selectProfile);
 
-  const { name, email, phone, url, summary, location } = profile;
+  // Desestruturamos as props do perfil vindas do Redux:
+  const { name, summary, email, phone, url, location } = profile;
 
+  // Função para atualizar qualquer campo do perfil:
   const handleProfileChange = (field: keyof ResumeProfile, value: string) => {
     dispatch(changeProfile({ field, value }));
   };
