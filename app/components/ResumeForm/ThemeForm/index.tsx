@@ -6,7 +6,6 @@ import { InlineInput } from "./InlineInput";
 import { DocumentSizeSelections, FontFamilySelectionCSR, FontSizeSelections } from "./Selection";
 import { Cog6ToothIcon } from "@heroicons/react/24/solid";
 import { useAppDispatch, useAppSelector } from "@/app/lib/redux/hooks";
-import { useState } from "react";
 
 export const ThemeForm = () => {
   const userId = useAppSelector(state => state.settings);
@@ -14,7 +13,6 @@ export const ThemeForm = () => {
   const { fontSize, fontFamily, documentSize } = settings;
   const themeColor = settings.themeColor || DEFAULT_THEME_COLOR;
   const dispatch = useAppDispatch();
-  const [qrcodeUrl, setQrcodeUrl] = useState<string | null>(null);
 
   const handleSettingsChange = (field: GeneralSetting, value: string) => {
     dispatch(changeSettings({ field, value }));
@@ -29,7 +27,7 @@ export const ThemeForm = () => {
             Configurações do Currículo
           </h1>
         </div>
-        
+
         <div>
           <InlineInput
             label="Cor Tema"
@@ -58,7 +56,7 @@ export const ThemeForm = () => {
             ))}
           </div>
         </div>
-        
+
         <div>
           <InputGroupWrapper label="Fontes" />
           <FontFamilySelectionCSR
@@ -67,7 +65,7 @@ export const ThemeForm = () => {
             handleSettingsChange={handleSettingsChange}
           />
         </div>
-        
+
         <div>
           <InlineInput
             label="Tamanho da Fonte (pt)"
@@ -83,7 +81,7 @@ export const ThemeForm = () => {
             handleSettingsChange={handleSettingsChange}
           />
         </div>
-        
+
         <div>
           <InputGroupWrapper label="Tamanho do Documento" />
           <DocumentSizeSelections
@@ -93,20 +91,11 @@ export const ThemeForm = () => {
           />
         </div>
       </div>
-      
+
       <div className="mt-7">
         <h3 className="uppercase text-primary font-bold">
           Confirme os campos antes de Gerar o Currículo:
         </h3>
-      </div>
-      
-      <div className="flex flex-col items-center gap-7 mt-3 mb-4 rounded-md">
-        <button
-          type="button"
-          className="ml-5 font-bold h-14 w-full max-w-xs justify-center items-center cursor-pointer rounded-2xl text-white flex gap-2 border bg-primary px-3 py-0.5 hover:bg-gray-100 lg:max-w-md"
-        >
-          <a href="https://pix.empregospara.com/pix">Gerar PIX</a>
-        </button>
       </div>
     </form>
   );
