@@ -40,14 +40,18 @@ export const ResumeForm = () => {
     try {
       setCopied(false);
       setError("");
+
       const res = await fetch("https://api-gerencianet.onrender.com/pagar");
       const data = await res.json();
-      if (!data.imagem_base64 || !data.pixCopiaECola) {
+
+      if (!data || !data.qr_code) {
         throw new Error("Resposta inválida da API");
       }
-      setQrCode(data.imagem_base64);
-      setPixCode(data.pixCopiaECola);
-      await navigator.clipboard.writeText(data.pixCopiaECola);
+
+      setQrCode(data.qr_code);
+      setPixCode(data.qr_code); // usando diretamente o qr_code como Pix Copia e Cola (caso a API não separe)
+
+      await navigator.clipboard.writeText(data.qr_code);
       setCopied(true);
     } catch (err) {
       console.error("Erro ao gerar PIX", err);
@@ -64,7 +68,7 @@ export const ResumeForm = () => {
       onMouseOver={() => setIsHover(true)}
       onMouseLeave={() => setIsHover(false)}
     >
-      <section className="flex flex-col max-w-2xl gap-8 p-[var(--resume-padding)] mb-10">
+      <section className="flex flex-col max-w-2xl gap-8 p-[var(--resume-padding)] pb-32">
         <ProfileForm />
         {formsOrder.map((form) => {
           const Component = formTypeToComponent[form];
@@ -72,7 +76,6 @@ export const ResumeForm = () => {
         })}
         <ThemeForm />
 
-        {/* Gerar PIX */}
         <div className="flex flex-col items-center gap-4 mt-8">
           <button
             onClick={gerarPix}
@@ -81,11 +84,11 @@ export const ResumeForm = () => {
             Gerar PIX
           </button>
 
-          {error && <p className="text-red-600">{error}</p>}
+          {error && <p className="text-red-600 font-medium">{error}</p>}
 
-          {qrCode && (
+          {qrCode && pixCode && (
             <div className="text-center">
-              <img src={qrCode} alt="QR Code PIX" className="mx-auto" />
+              <img src={qrCode} alt="QR Code PIX" className="mx-auto max-w-[250px]" />
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(pixCode);
