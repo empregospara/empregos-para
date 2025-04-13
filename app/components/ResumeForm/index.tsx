@@ -41,7 +41,7 @@ export const ResumeForm = () => {
   useEffect(() => {
     if (!txid) return;
     const interval = setInterval(async () => {
-      const res = await fetch("https://api-gerencianet.onrender.com/check-payment", {
+      const res = await fetch("https://pixempregospara.up.railway.app/check-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ txid }),
