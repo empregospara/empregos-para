@@ -79,7 +79,7 @@ export const ResumeForm = () => {
               setPago(false);
               setQrCode("");
               setPixCode("");
-              const res = await fetch("https://api-gerencianet.onrender.com/pagar");
+              const res = await fetch("https://pixempregospara.up.railway.app/pagar");
               const data = await res.json();
               setQrCode(data.qrCodeBase64);
               setPixCode(data.pixString);
