@@ -20,13 +20,15 @@ export const ResumePDFProfile = ({
   return (
     <ResumePDFSection style={{ marginTop: spacing["4"] }}>
       <ResumePDFText
-        bold={true}
+        bold
         themeColor={themeColor}
         style={{ fontSize: "20pt" }}
       >
         {name}
       </ResumePDFText>
+
       {summary && <ResumePDFText>{summary}</ResumePDFText>}
+
       <View
         style={{
           ...styles.flexRowBetween,
@@ -54,15 +56,13 @@ export const ResumePDFProfile = ({
             let src = "";
             switch (key) {
               case "email":
-                src = `mailTo:${value}`;
+                src = `mailto:${value}`;
                 break;
-              case "phone": {
+              case "phone":
                 src = `tel:${value.replace(/[^\d+]/g, "")}`;
                 break;
-              }
-              default: {
+              default:
                 src = value.startsWith("http") ? value : `https://${value}`;
-              }
             }
 
             return (
