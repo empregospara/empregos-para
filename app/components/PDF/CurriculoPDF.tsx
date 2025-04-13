@@ -1,9 +1,10 @@
 // app/components/PDF/CurriculoPDF.tsx
+
 import React from "react";
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 
 interface CurriculoPDFProps {
-  fullName: string;
+  fullName: string; // Recebe o nome completo
   email: string;
   experiences: { title: string; company: string; period: string }[];
   skills: string[];
@@ -33,7 +34,12 @@ const styles = StyleSheet.create({
   },
 });
 
-const CurriculoPDF: React.FC<CurriculoPDFProps> = ({ fullName, email, experiences, skills }) => (
+const CurriculoPDF: React.FC<CurriculoPDFProps> = ({
+  fullName,
+  email,
+  experiences,
+  skills,
+}) => (
   <Document>
     <Page style={styles.page}>
       <View style={styles.section}>
