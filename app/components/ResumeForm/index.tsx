@@ -15,6 +15,7 @@ import { ProjectsForm } from "./ProjectsForm";
 import { SkillsForm } from "./SkillsForm";
 import { CustomForm } from "./CustomForm";
 import { ThemeForm } from "./ThemeForm";
+import { downloadCurriculoPDF } from "@/app/lib/downloadCurriculoPDF";
 
 const formTypeToComponent: { [type in ShowForm]: () => JSX.Element } = {
   workExperiences: WorkExperiencesForm,
@@ -36,13 +37,6 @@ export const ResumeForm = () => {
   const [pago, setPago] = useState(false);
 
   const formsOrder = useAppSelector(selectFormsOrder);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storedTxid = localStorage.getItem("pix_txid");
-      if (storedTxid) setTxid(storedTxid);
-    }
-  }, []);
 
   useEffect(() => {
     if (!txid) return;
@@ -78,7 +72,7 @@ export const ResumeForm = () => {
         })}
         <ThemeForm />
 
-        <div className="flex flex-col items-center gap-4 mt-1">
+        <div className="flex flex-col items-center gap-4 mt-8">
           <button
             onClick={async () => {
               setCopied(false);
@@ -90,9 +84,6 @@ export const ResumeForm = () => {
               setQrCode(data.qrCodeBase64);
               setPixCode(data.pixString);
               setTxid(data.txid);
-              if (typeof window !== "undefined") {
-                localStorage.setItem("pix_txid", data.txid);
-              }
             }}
             className="bg-gradient-to-r from-pink-500 to-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90"
           >
@@ -118,13 +109,12 @@ export const ResumeForm = () => {
           )}
 
           {pago && (
-            <a
-              href="/curriculo.pdf"
-              download
+            <button
+              onClick={downloadCurriculoPDF}
               className="bg-green-600 text-white font-bold px-5 py-3 mt-4 rounded-lg hover:bg-green-700"
             >
               Baixar Currículo
-            </a>
+            </button>
           )}
         </div>
       </section>
