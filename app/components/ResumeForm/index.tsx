@@ -30,9 +30,23 @@ export const ResumeForm = () => {
 
   const [isHover, setIsHover] = useState(false);
   const [qrCode, setQrCode] = useState("");
+  const [pixCode, setPixCode] = useState("");
   const [copied, setCopied] = useState(false);
 
   const formsOrder = useAppSelector(selectFormsOrder);
+
+  const gerarPix = async () => {
+    try {
+      const res = await fetch("https://api-gerencianet.onrender.com/pagar");
+      const data = await res.json();
+      setQrCode(data.imagem_base64);
+      setPixCode(data.qr_code);
+      navigator.clipboard.writeText(data.qr_code);
+      setCopied(true);
+    } catch (error) {
+      console.error("Erro ao gerar PIX:", error);
+    }
+  };
 
   return (
     <div
@@ -54,17 +68,7 @@ export const ResumeForm = () => {
         {/* Novo botão de gerar PIX + QR Code */}
         <div className="flex flex-col items-center gap-4 mt-4">
           <button
-            onClick={async () => {
-              try {
-                const res = await fetch("https://api-gerencianet.onrender.com/pagar");
-                const data = await res.json();
-                navigator.clipboard.writeText(data.qr_code);
-                setQrCode(data.imagem_base64);
-                setCopied(true);
-              } catch (err) {
-                console.error("Erro ao gerar PIX", err);
-              }
-            }}
+            onClick={gerarPix}
             className="bg-gradient-to-r from-pink-500 to-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90"
           >
             Gerar PIX
@@ -75,7 +79,7 @@ export const ResumeForm = () => {
               <img src={qrCode} alt="QR Code PIX" className="mx-auto" />
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(qrCode);
+                  navigator.clipboard.writeText(pixCode);
                   setCopied(true);
                 }}
                 className="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
