@@ -8,8 +8,8 @@ import { store } from "@/app/lib/redux/store";
 export async function downloadCurriculoPDF() {
   const state = store.getState();
   const profile = state.resume.profile;
-  const experiences = state.resume.workExperiences.items;
-  const skills = state.resume.skills.items;
+  const experiences = state.resume.workExperiences;
+  const skills = state.resume.skills;
 
 
   const blob = await pdf(
