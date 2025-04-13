@@ -4,7 +4,7 @@ import {
   selectWorkExperiences,
 } from "@/app/lib/redux/resumeSlice";
 import { Form, FormSection } from "./Form";
-import { CreateHandleChangeArgsWithDescriptions } from "./types";
+import { CreateHandleChangeArgsWithDescriptions } from "./types"; // Certifique-se de que esse tipo está exportado em "./types"
 import { ResumeWorkExperience } from "@/app/lib/redux/types";
 import { BulletListTextArea, Input } from "./Form/InputGroup";
 
@@ -17,11 +17,10 @@ export const WorkExperiencesForm = () => {
   return (
     <Form form="workExperiences" addButtonText="Experiência">
       {workExperiences.map(({ company, jobTitle, date, descriptions }, idx) => {
+        // A função abaixo usa CreateHandleChangeArgsWithDescriptions<ResumeWorkExperience>.
+        // Isso requer que 'jobTitle', 'company', 'date' sejam strings, e 'descriptions' seja string[].
         const handleWorkExperienceChange = (
-          ...[
-            field,
-            value,
-          ]: CreateHandleChangeArgsWithDescriptions<ResumeWorkExperience>
+          ...[field, value]: CreateHandleChangeArgsWithDescriptions<ResumeWorkExperience>
         ) => {
           dispatch(changeWorkExperience({ idx, field, value } as any));
         };
