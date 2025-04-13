@@ -41,7 +41,7 @@ export const ResumeForm = () => {
   useEffect(() => {
     if (!txid) return;
     const interval = setInterval(async () => {
-      const res = await fetch("https://pixempregospara.up.railway.app/check-payment", {
+      const res = await fetch("https://api-gerencianet.onrender.com/check-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ txid }),
@@ -79,7 +79,7 @@ export const ResumeForm = () => {
               setPago(false);
               setQrCode("");
               setPixCode("");
-              const res = await fetch("https://pixempregospara.up.railway.app/pagar");
+              const res = await fetch("https://api-gerencianet.onrender.com/pagar");
               const data = await res.json();
               setQrCode(data.qrCodeBase64);
               setPixCode(data.pixString);
