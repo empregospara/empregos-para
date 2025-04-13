@@ -37,22 +37,19 @@ export const ResumeForm = () => {
 
   const formsOrder = useAppSelector(selectFormsOrder);
 
-  // monitorar pagamento
   useEffect(() => {
     if (!txid) return;
     const interval = setInterval(async () => {
-      try {
-        const res = await fetch("https://api-gerencianet.onrender.com/check-payment", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ txid }),
-        });
-        const data = await res.json();
-        if (data.paid) {
-          setPago(true);
-          clearInterval(interval);
-        }
-      } catch (_) {}
+      const res = await fetch("https://api-gerencianet.onrender.com/check-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ txid }),
+      });
+      const data = await res.json();
+      if (data.paid) {
+        setPago(true);
+        clearInterval(interval);
+      }
     }, 5000);
     return () => clearInterval(interval);
   }, [txid]);
@@ -112,7 +109,7 @@ export const ResumeForm = () => {
 
           {pago && (
             <a
-              href="/curriculo.pdf" // aqui vai o link real do arquivo
+              href="/curriculo.pdf"
               download
               className="bg-green-600 text-white font-bold px-5 py-3 mt-4 rounded-lg hover:bg-green-700"
             >
