@@ -32,21 +32,25 @@ export const ResumeForm = () => {
   const [qrCode, setQrCode] = useState("");
   const [pixCode, setPixCode] = useState("");
   const [copied, setCopied] = useState(false);
-  const [txid, setTxid] = useState(() => localStorage.getItem("pix_txid") || "");
+  const [txid, setTxid] = useState("");
   const [pago, setPago] = useState(false);
 
   const formsOrder = useAppSelector(selectFormsOrder);
 
-  // verificar se já existe txid salvo
   useEffect(() => {
-    const storedTxid = localStorage.getItem("pix_txid");
-    if (!storedTxid) return;
+    if (typeof window !== "undefined") {
+      const storedTxid = localStorage.getItem("pix_txid");
+      if (storedTxid) setTxid(storedTxid);
+    }
+  }, []);
 
+  useEffect(() => {
+    if (!txid) return;
     const interval = setInterval(async () => {
       const res = await fetch("https://api-gerencianet.onrender.com/check-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ txid: storedTxid }),
+        body: JSON.stringify({ txid }),
       });
       const data = await res.json();
       if (data.paid) {
@@ -54,9 +58,8 @@ export const ResumeForm = () => {
         clearInterval(interval);
       }
     }, 5000);
-
     return () => clearInterval(interval);
-  }, []);
+  }, [txid]);
 
   return (
     <div
@@ -87,7 +90,9 @@ export const ResumeForm = () => {
               setQrCode(data.qrCodeBase64);
               setPixCode(data.pixString);
               setTxid(data.txid);
-              localStorage.setItem("pix_txid", data.txid); // salva txid
+              if (typeof window !== "undefined") {
+                localStorage.setItem("pix_txid", data.txid);
+              }
             }}
             className="bg-gradient-to-r from-pink-500 to-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90"
           >
