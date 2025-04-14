@@ -37,7 +37,6 @@ export const ResumeForm = () => {
 
   const formsOrder = useAppSelector(selectFormsOrder);
 
-  // Função para carregar o script do Mercado Pago apenas uma vez
   const loadMercadoPagoScript = (): Promise<void> => {
     return new Promise((resolve, reject) => {
       if (document.querySelector('script[src="https://sdk.mercadopago.com/js/v2"]')) {
@@ -53,24 +52,21 @@ export const ResumeForm = () => {
     });
   };
 
-  // Inicializa o Payment Brick (QR Code e Copia e Cola) ao montar o componente
   useEffect(() => {
     const initPaymentBrick = async () => {
       try {
-        // Carrega o script do Mercado Pago (uma única vez)
         await loadMercadoPagoScript();
-        // Solicita a criação da preferência no backend
         const response = await fetch("https://api-mercadopago-nqye.onrender.com/criar-preferencia", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
         });
+
+        if (!response.ok) throw new Error("Erro na requisição ao backend");
         const { preferenceId } = await response.json();
-        
-        // Limpa o container, se necessário
+
         const container = document.getElementById("payment-brick");
         if (container) container.innerHTML = "";
 
-        // Inicializa o Payment Brick com preferência e valor mínimo de R$1,00
         const mp = new (window as any).MercadoPago("APP_USR-761098bf-af6c-4dd1-bb74-354ce46735f0");
         const bricksBuilder = mp.bricks();
         bricksBuilder.create("payment", "payment-brick", {
@@ -101,7 +97,6 @@ export const ResumeForm = () => {
     initPaymentBrick();
   }, []);
 
-  // Efeito para realizar polling e verificar o status do pagamento a cada 5s
   useEffect(() => {
     if (!paymentId) return;
     const interval = setInterval(async () => {
@@ -121,7 +116,6 @@ export const ResumeForm = () => {
       }
     }, 5000);
 
-    // Tempo limite de 10 minutos para confirmar o pagamento
     const timeout = setTimeout(() => {
       setTimeoutExceeded(true);
       clearInterval(interval);
@@ -133,7 +127,6 @@ export const ResumeForm = () => {
     };
   }, [paymentId]);
 
-  // Inicializa o Status Screen Brick assim que o pagamento é iniciado
   useEffect(() => {
     if (!showStatusScreen || !paymentId) return;
     const initStatusScreenBrick = async () => {
