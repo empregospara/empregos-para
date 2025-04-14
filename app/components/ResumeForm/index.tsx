@@ -33,6 +33,7 @@ export const ResumeForm = () => {
   const [paymentId, setPaymentId] = useState<string>("");
   const [paid, setPaid] = useState(false);
   const [timeoutExceeded, setTimeoutExceeded] = useState(false);
+  const [showStatusScreen, setShowStatusScreen] = useState(false);
 
   const formsOrder = useAppSelector(selectFormsOrder);
 
@@ -49,7 +50,7 @@ export const ResumeForm = () => {
       const { preferenceId } = await pref.json();
 
       const container = document.getElementById("payment-brick");
-      if (container) container.innerHTML = ""; // evitar duplicações
+      if (container) container.innerHTML = "";
 
       const bricksBuilder = mp.bricks();
       bricksBuilder.create("payment", "payment-brick", {
@@ -58,14 +59,14 @@ export const ResumeForm = () => {
           preferenceId,
         },
         customization: {
-          paymentMethods: { ticket: "all", bankTransfer: "all", creditCard: "all", pix: "all" },
+          paymentMethods: { pix: "all" },
         },
         callbacks: {
           onReady: () => console.log("💳 Payment Brick carregado"),
-          onSubmit: async ({ selectedPaymentMethod, formData }: any) => {
-            console.log("🔁 Pagamento submetido:", selectedPaymentMethod, formData);
+          onSubmit: async ({ formData }: any) => {
             if (formData?.payment?.id) {
               setPaymentId(formData.payment.id);
+              setShowStatusScreen(true);
               setTimeoutExceeded(false);
             }
           },
@@ -94,13 +95,36 @@ export const ResumeForm = () => {
     const timeout = setTimeout(() => {
       setTimeoutExceeded(true);
       clearInterval(interval);
-    }, 10 * 60 * 1000); // 10 minutos
+    }, 10 * 60 * 1000);
 
     return () => {
       clearInterval(interval);
       clearTimeout(timeout);
     };
   }, [paymentId]);
+
+  useEffect(() => {
+    if (!showStatusScreen || !paymentId) return;
+
+    const script = document.createElement("script");
+    script.src = "https://sdk.mercadopago.com/js/v2";
+    script.async = true;
+    script.onload = () => {
+      const mp = new (window as any).MercadoPago("APP_USR-761098bf-af6c-4dd1-bb74-354ce46735f0");
+      const statusContainer = document.getElementById("status-screen-brick");
+      if (statusContainer) statusContainer.innerHTML = "";
+
+      mp.bricks().create("statusScreen", "status-screen-brick", {
+        initialization: {
+          paymentId,
+        },
+        callbacks: {
+          onError: (error: any) => console.error("❌ Erro no Status Screen Brick:", error),
+        },
+      });
+    };
+    document.body.appendChild(script);
+  }, [showStatusScreen, paymentId]);
 
   return (
     <div
@@ -120,7 +144,12 @@ export const ResumeForm = () => {
         <ThemeForm />
 
         <div className="flex flex-col items-center gap-4 mt-8">
-          {!paid && !timeoutExceeded && <div id="payment-brick" className="w-full" />}
+          {!paid && !timeoutExceeded && (
+            <>
+              <div id="payment-brick" className="w-full" />
+              {showStatusScreen && <div id="status-screen-brick" className="w-full" />}
+            </>
+          )}
 
           {timeoutExceeded && (
             <div className="text-center text-red-600">
