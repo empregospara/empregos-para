@@ -25,76 +25,49 @@ const formTypeToComponent: { [type in ShowForm]: () => JSX.Element } = {
   custom: CustomForm,
 };
 
-declare global {
-  interface Window {
-    MercadoPago: any;
-  }
-}
-
 export const ResumeForm = () => {
   useSetInitialStore();
   useSaveStateToLocalStorageOnChange();
 
   const [isHover, setIsHover] = useState(false);
-  const [qrCode, setQrCode] = useState("");
-  const [pixCode, setPixCode] = useState("");
-  const [copied, setCopied] = useState(false);
-  const [txid, setTxid] = useState("");
-  const [pago, setPago] = useState(false);
+  const [paymentId, setPaymentId] = useState<string>("");
+  const [paid, setPaid] = useState(false);
+  const [timeoutExceeded, setTimeoutExceeded] = useState(false);
 
   const formsOrder = useAppSelector(selectFormsOrder);
-
-  useEffect(() => {
-    if (!txid) return;
-    const interval = setInterval(async () => {
-      const res = await fetch("https://api-gerencianet.onrender.com/check-payment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ txid }),
-      });
-      const data = await res.json();
-      if (data.paid) {
-        setPago(true);
-        clearInterval(interval);
-      }
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [txid]);
 
   useEffect(() => {
     const script = document.createElement("script");
     script.src = "https://sdk.mercadopago.com/js/v2";
     script.async = true;
     script.onload = async () => {
-      const mp = new window.MercadoPago("APP_USR-761098bf-af6c-4dd1-bb74-354ce46735f0");
+      const mp = new (window as any).MercadoPago("APP_USR-761098bf-af6c-4dd1-bb74-354ce46735f0");
       const pref = await fetch("https://api-mercadopago-nqye.onrender.com/criar-preferencia", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
       const { preferenceId } = await pref.json();
 
-      mp.bricks().create("payment", "payment-brick-container", {
+      const container = document.getElementById("payment-brick");
+      if (container) container.innerHTML = ""; // evitar duplicações
+
+      const bricksBuilder = mp.bricks();
+      bricksBuilder.create("payment", "payment-brick", {
         initialization: {
           amount: 0.01,
           preferenceId,
         },
         customization: {
-          paymentMethods: {
-            ticket: "all",
-            bankTransfer: "all",
-            pix: "all",
-          },
+          paymentMethods: { ticket: "all", bankTransfer: "all", creditCard: "all", pix: "all" },
         },
         callbacks: {
           onReady: () => console.log("💳 Payment Brick carregado"),
-          onSubmit: async ({
-            selectedPaymentMethod,
-            formData,
-          }: {
-            selectedPaymentMethod: string;
-            formData: Record<string, any>;
-          }) => {
+          onSubmit: async ({ selectedPaymentMethod, formData }: any) => {
             console.log("🔁 Pagamento submetido:", selectedPaymentMethod, formData);
+            if (formData?.payment?.id) {
+              setPaymentId(formData.payment.id);
+              setTimeoutExceeded(false);
+            }
           },
           onError: (error: any) => console.error("❌ Erro no Payment Brick:", error),
         },
@@ -102,6 +75,32 @@ export const ResumeForm = () => {
     };
     document.body.appendChild(script);
   }, []);
+
+  useEffect(() => {
+    if (!paymentId) return;
+    const interval = setInterval(async () => {
+      const res = await fetch("https://api-mercadopago-nqye.onrender.com/check-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: paymentId }),
+      });
+      const data = await res.json();
+      if (data.paid) {
+        setPaid(true);
+        clearInterval(interval);
+      }
+    }, 5000);
+
+    const timeout = setTimeout(() => {
+      setTimeoutExceeded(true);
+      clearInterval(interval);
+    }, 10 * 60 * 1000); // 10 minutos
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [paymentId]);
 
   return (
     <div
@@ -121,51 +120,31 @@ export const ResumeForm = () => {
         <ThemeForm />
 
         <div className="flex flex-col items-center gap-4 mt-8">
-          <button
-            onClick={async () => {
-              setCopied(false);
-              setPago(false);
-              setQrCode("");
-              setPixCode("");
-              const res = await fetch("https://api-gerencianet.onrender.com/pagar");
-              const data = await res.json();
-              setQrCode(data.qrCodeBase64);
-              setPixCode(data.pixString);
-              setTxid(data.txid);
-            }}
-            className="bg-gradient-to-r from-pink-500 to-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90"
-          >
-            Gerar PIX
-          </button>
+          {!paid && !timeoutExceeded && <div id="payment-brick" className="w-full" />}
 
-          {qrCode && (
-            <div className="text-center">
-              <img src={qrCode} alt="QR Code PIX" className="mx-auto max-w-[260px]" />
+          {timeoutExceeded && (
+            <div className="text-center text-red-600">
+              Tempo expirado. Nenhum pagamento foi confirmado.<br />
               <button
-                onClick={() => {
-                  navigator.clipboard.writeText(pixCode);
-                  setCopied(true);
-                }}
-                className="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                onClick={() => window.location.reload()}
+                className="mt-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
               >
-                Copiar código Pix Copia e Cola
+                Gerar novo pagamento
               </button>
-              {copied && (
-                <p className="text-green-600 mt-1">Código copiado com sucesso!</p>
-              )}
             </div>
           )}
 
-          {pago && (
-            <button
-              onClick={downloadCurriculoPDF}
-              className="bg-green-600 text-white font-bold px-5 py-3 mt-4 rounded-lg hover:bg-green-700"
-            >
-              Baixar Currículo
-            </button>
+          {paid && (
+            <>
+              <p className="text-green-600 font-semibold">✅ Pagamento confirmado!</p>
+              <button
+                onClick={downloadCurriculoPDF}
+                className="bg-green-600 text-white font-bold px-5 py-3 rounded-lg hover:bg-green-700"
+              >
+                Baixar Currículo
+              </button>
+            </>
           )}
-
-          <div id="payment-brick-container" className="w-full mt-6" />
         </div>
       </section>
     </div>
