@@ -75,7 +75,7 @@ export const ResumeForm = () => {
             preferenceId,
           },
           customization: {
-            paymentMethods: { pix: "all" },
+            paymentMethods: { pix: true },
           },
           callbacks: {
             onReady: () => console.log("💳 Payment Brick carregado"),
