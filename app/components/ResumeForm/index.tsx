@@ -73,6 +73,11 @@ export const ResumeForm = () => {
           initialization: {
             preferenceId,
           },
+          customization: {
+            paymentMethods: {
+              types: ["pix"],
+            },
+          },
           callbacks: {
             onReady: () => console.log("💳 Payment Brick carregado"),
             onSubmit: async ({ formData }: any) => {
