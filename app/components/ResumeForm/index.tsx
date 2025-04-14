@@ -37,61 +37,91 @@ export const ResumeForm = () => {
 
   const formsOrder = useAppSelector(selectFormsOrder);
 
+  // Função para carregar o script do Mercado Pago apenas uma vez
+  const loadMercadoPagoScript = (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      if (document.querySelector('script[src="https://sdk.mercadopago.com/js/v2"]')) {
+        resolve();
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://sdk.mercadopago.com/js/v2";
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error("Erro ao carregar script do Mercado Pago"));
+      document.body.appendChild(script);
+    });
+  };
+
+  // Inicializa o Payment Brick (QR Code e Copia e Cola) ao montar o componente
   useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://sdk.mercadopago.com/js/v2";
-    script.async = true;
-    script.onload = async () => {
-      const mp = new (window as any).MercadoPago("APP_USR-761098bf-af6c-4dd1-bb74-354ce46735f0");
-      const pref = await fetch("https://api-mercadopago-nqye.onrender.com/criar-preferencia", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-      const { preferenceId } = await pref.json();
+    const initPaymentBrick = async () => {
+      try {
+        // Carrega o script do Mercado Pago (uma única vez)
+        await loadMercadoPagoScript();
+        // Solicita a criação da preferência no backend
+        const response = await fetch("https://api-mercadopago-nqye.onrender.com/criar-preferencia", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
+        const { preferenceId } = await response.json();
+        
+        // Limpa o container, se necessário
+        const container = document.getElementById("payment-brick");
+        if (container) container.innerHTML = "";
 
-      const container = document.getElementById("payment-brick");
-      if (container) container.innerHTML = "";
-
-      const bricksBuilder = mp.bricks();
-      bricksBuilder.create("payment", "payment-brick", {
-        initialization: {
-          amount: 0.01,
-          preferenceId,
-        },
-        customization: {
-          paymentMethods: { pix: "all" },
-        },
-        callbacks: {
-          onReady: () => console.log("💳 Payment Brick carregado"),
-          onSubmit: async ({ formData }: any) => {
-            if (formData?.payment?.id) {
-              setPaymentId(formData.payment.id);
-              setShowStatusScreen(true);
-              setTimeoutExceeded(false);
-            }
+        // Inicializa o Payment Brick com preferência e valor mínimo de R$1,00
+        const mp = new (window as any).MercadoPago("APP_USR-761098bf-af6c-4dd1-bb74-354ce46735f0");
+        const bricksBuilder = mp.bricks();
+        bricksBuilder.create("payment", "payment-brick", {
+          initialization: {
+            amount: 1.00,
+            preferenceId,
           },
-          onError: (error: any) => console.error("❌ Erro no Payment Brick:", error),
-        },
-      });
+          customization: {
+            paymentMethods: { pix: "all" },
+          },
+          callbacks: {
+            onReady: () => console.log("💳 Payment Brick carregado"),
+            onSubmit: async ({ formData }: any) => {
+              if (formData?.payment?.id) {
+                setPaymentId(formData.payment.id);
+                setShowStatusScreen(true);
+                setTimeoutExceeded(false);
+              }
+            },
+            onError: (error: any) => console.error("❌ Erro no Payment Brick:", error),
+          },
+        });
+      } catch (error) {
+        console.error("Erro ao inicializar Payment Brick:", error);
+      }
     };
-    document.body.appendChild(script);
+
+    initPaymentBrick();
   }, []);
 
+  // Efeito para realizar polling e verificar o status do pagamento a cada 5s
   useEffect(() => {
     if (!paymentId) return;
     const interval = setInterval(async () => {
-      const res = await fetch("https://api-mercadopago-nqye.onrender.com/check-payment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: paymentId }),
-      });
-      const data = await res.json();
-      if (data.paid) {
-        setPaid(true);
-        clearInterval(interval);
+      try {
+        const res = await fetch("https://api-mercadopago-nqye.onrender.com/check-payment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: paymentId }),
+        });
+        const data = await res.json();
+        if (data.paid) {
+          setPaid(true);
+          clearInterval(interval);
+        }
+      } catch (error) {
+        console.error("Erro ao verificar pagamento:", error);
       }
     }, 5000);
 
+    // Tempo limite de 10 minutos para confirmar o pagamento
     const timeout = setTimeout(() => {
       setTimeoutExceeded(true);
       clearInterval(interval);
@@ -103,27 +133,27 @@ export const ResumeForm = () => {
     };
   }, [paymentId]);
 
+  // Inicializa o Status Screen Brick assim que o pagamento é iniciado
   useEffect(() => {
     if (!showStatusScreen || !paymentId) return;
-
-    const script = document.createElement("script");
-    script.src = "https://sdk.mercadopago.com/js/v2";
-    script.async = true;
-    script.onload = () => {
-      const mp = new (window as any).MercadoPago("APP_USR-761098bf-af6c-4dd1-bb74-354ce46735f0");
-      const statusContainer = document.getElementById("status-screen-brick");
-      if (statusContainer) statusContainer.innerHTML = "";
-
-      mp.bricks().create("statusScreen", "status-screen-brick", {
-        initialization: {
-          paymentId,
-        },
-        callbacks: {
-          onError: (error: any) => console.error("❌ Erro no Status Screen Brick:", error),
-        },
-      });
+    const initStatusScreenBrick = async () => {
+      try {
+        await loadMercadoPagoScript();
+        const statusContainer = document.getElementById("status-screen-brick");
+        if (statusContainer) statusContainer.innerHTML = "";
+        const mp = new (window as any).MercadoPago("APP_USR-761098bf-af6c-4dd1-bb74-354ce46735f0");
+        mp.bricks().create("statusScreen", "status-screen-brick", {
+          initialization: { paymentId },
+          callbacks: {
+            onError: (error: any) => console.error("❌ Erro no Status Screen Brick:", error),
+          },
+        });
+      } catch (error) {
+        console.error("Erro ao inicializar Status Screen Brick:", error);
+      }
     };
-    document.body.appendChild(script);
+
+    initStatusScreenBrick();
   }, [showStatusScreen, paymentId]);
 
   return (
