@@ -57,6 +57,11 @@ export const ResumeForm = () => {
       try {
         await loadMercadoPagoScript();
 
+        // Espera ativa por window.MercadoPago
+        while (!(window as any).MercadoPago) {
+          await new Promise((r) => setTimeout(r, 50));
+        }
+
         const response = await fetch("https://api-mercadopago-nqye.onrender.com/criar-preferencia", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
