@@ -87,10 +87,16 @@ export const ResumeForm = () => {
         },
         callbacks: {
           onReady: () => console.log("💳 Payment Brick carregado"),
-          onSubmit: async ({ selectedPaymentMethod, formData }) => {
+          onSubmit: async ({
+            selectedPaymentMethod,
+            formData,
+          }: {
+            selectedPaymentMethod: string;
+            formData: Record<string, any>;
+          }) => {
             console.log("🔁 Pagamento submetido:", selectedPaymentMethod, formData);
           },
-          onError: (error) => console.error("❌ Erro no Payment Brick:", error),
+          onError: (error: any) => console.error("❌ Erro no Payment Brick:", error),
         },
       });
     };
