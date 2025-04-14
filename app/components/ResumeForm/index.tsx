@@ -73,7 +73,14 @@ export const ResumeForm = () => {
         });
 
         const container = document.getElementById("payment-brick");
-        if (container) container.innerHTML = "";
+        console.log("🧱 #payment-brick existe?", container);
+
+        if (!container) {
+          console.error("❌ Container #payment-brick não encontrado. Abortando.");
+          return;
+        }
+
+        container.innerHTML = "";
 
         const mp = new (window as any).MercadoPago("APP_USR-761098bf-af6c-4dd1-bb74-354ce46735f0");
         const bricksBuilder = mp.bricks();
