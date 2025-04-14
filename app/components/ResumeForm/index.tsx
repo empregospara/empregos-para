@@ -83,6 +83,7 @@ export const ResumeForm = () => {
           customization: {
             paymentMethods: {
               defaultPaymentMethodId: "pix",
+              types: ["pix"],
             },
           },
           callbacks: {
