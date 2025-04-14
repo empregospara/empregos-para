@@ -66,13 +66,15 @@ export const ResumeForm = () => {
 
         const { amount, email } = await response.json();
 
+        console.log("⚙️ Dados recebidos:", { amount, email });
+
         const container = document.getElementById("payment-brick");
         if (container) container.innerHTML = "";
 
         const mp = new (window as any).MercadoPago("APP_USR-761098bf-af6c-4dd1-bb74-354ce46735f0");
         const bricksBuilder = mp.bricks();
 
-        bricksBuilder.create("payment", "payment-brick", {
+        await bricksBuilder.create("payment", "payment-brick", {
           initialization: {
             amount,
             payer: {
@@ -99,7 +101,7 @@ export const ResumeForm = () => {
           },
         });
       } catch (error) {
-        console.error("Erro ao inicializar Payment Brick:", error);
+        console.error("❌ Erro ao inicializar Payment Brick:", error);
       }
     };
 
