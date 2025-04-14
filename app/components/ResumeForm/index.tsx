@@ -56,7 +56,7 @@ export const ResumeForm = () => {
     const initPaymentBrick = async () => {
       try {
         await loadMercadoPagoScript();
-        const response = await fetch("https://api-mercadopago-nqye.onrender.com/criar-preferencia", {
+        const response = await fetch("https://api-mercadopago-nqye.onrender.com/criar-pagamento", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
         });
