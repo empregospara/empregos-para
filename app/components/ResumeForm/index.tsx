@@ -56,26 +56,30 @@ export const ResumeForm = () => {
     const initPaymentBrick = async () => {
       try {
         await loadMercadoPagoScript();
+
         const response = await fetch("https://api-mercadopago-nqye.onrender.com/criar-preferencia", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
         });
 
         if (!response.ok) throw new Error("Erro na requisição ao backend");
-        const { preferenceId } = await response.json();
+
+        const { amount, email } = await response.json();
 
         const container = document.getElementById("payment-brick");
         if (container) container.innerHTML = "";
 
         const mp = new (window as any).MercadoPago("APP_USR-761098bf-af6c-4dd1-bb74-354ce46735f0");
         const bricksBuilder = mp.bricks();
+
         bricksBuilder.create("payment", "payment-brick", {
           initialization: {
-            preferenceId,
+            amount,
+            payer: { email },
           },
           customization: {
             paymentMethods: {
-              types: ["pix"],
+              defaultPaymentMethodId: "pix",
             },
           },
           callbacks: {
