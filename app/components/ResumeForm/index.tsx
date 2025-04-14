@@ -75,7 +75,10 @@ export const ResumeForm = () => {
         bricksBuilder.create("payment", "payment-brick", {
           initialization: {
             amount,
-            payer: { email },
+            payer: {
+              email,
+              entityType: "individual",
+            },
           },
           customization: {
             paymentMethods: {
