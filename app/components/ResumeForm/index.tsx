@@ -71,6 +71,7 @@ export const ResumeForm = () => {
         const bricksBuilder = mp.bricks();
         bricksBuilder.create("payment", "payment-brick", {
           initialization: {
+            amount: 1.0,
             preferenceId,
           },
           customization: {
