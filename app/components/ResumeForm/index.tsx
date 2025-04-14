@@ -55,6 +55,42 @@ export const ResumeForm = () => {
     return () => clearInterval(interval);
   }, [txid]);
 
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://sdk.mercadopago.com/js/v2";
+    script.async = true;
+    script.onload = async () => {
+      const mp = new window.MercadoPago("TEST-a68b3eed-d102-47d7-89ae-2ca2daea3087");
+      const pref = await fetch("https://api-mercadopago-nqye.onrender.com/criar-preferencia", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const { preferenceId } = await pref.json();
+
+      mp.bricks().create("payment", "payment-brick-container", {
+        initialization: {
+          amount: 0.01,
+          preferenceId,
+        },
+        customization: {
+          paymentMethods: {
+            ticket: "all",
+            bankTransfer: "all",
+            pix: "all",
+          },
+        },
+        callbacks: {
+          onReady: () => console.log("💳 Payment Brick carregado"),
+          onSubmit: async ({ selectedPaymentMethod, formData }) => {
+            console.log("🔁 Pagamento submetido:", selectedPaymentMethod, formData);
+          },
+          onError: (error) => console.error("❌ Erro no Payment Brick:", error),
+        },
+      });
+    };
+    document.body.appendChild(script);
+  }, []);
+
   return (
     <div
       className={cx(
@@ -116,6 +152,8 @@ export const ResumeForm = () => {
               Baixar Currículo
             </button>
           )}
+
+          <div id="payment-brick-container" className="w-full mt-6" />
         </div>
       </section>
     </div>
