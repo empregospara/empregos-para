@@ -25,6 +25,12 @@ const formTypeToComponent: { [type in ShowForm]: () => JSX.Element } = {
   custom: CustomForm,
 };
 
+declare global {
+  interface Window {
+    MercadoPago: any;
+  }
+}
+
 export const ResumeForm = () => {
   useSetInitialStore();
   useSaveStateToLocalStorageOnChange();
