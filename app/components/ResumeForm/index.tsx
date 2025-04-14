@@ -1,173 +1,90 @@
-'use client';
+require("dotenv").config();
+const express = require("express");
+const axios = require("axios");
+const cors = require("cors");
+const fs = require("fs");
 
-import { cx } from "@/app/lib/cx";
-import {
-  useAppSelector,
-  useSaveStateToLocalStorageOnChange,
-  useSetInitialStore,
-} from "@/app/lib/redux/hooks";
-import { useState, useEffect } from "react";
-import { ProfileForm } from "./ProfileForm";
-import { ShowForm, selectFormsOrder } from "@/app/lib/redux/settingsSlice";
-import { WorkExperiencesForm } from "./WorkExperiencesForm";
-import { EducationsForm } from "./EducationsForm";
-import { ProjectsForm } from "./ProjectsForm";
-import { SkillsForm } from "./SkillsForm";
-import { CustomForm } from "./CustomForm";
-import { ThemeForm } from "./ThemeForm";
-import { downloadCurriculoPDF } from "@/app/lib/downloadCurriculoPDF";
+const app = express();
+app.use(cors());
+app.use(express.json());
 
-const formTypeToComponent: { [type in ShowForm]: () => JSX.Element } = {
-  workExperiences: WorkExperiencesForm,
-  educations: EducationsForm,
-  projects: ProjectsForm,
-  skills: SkillsForm,
-  custom: CustomForm,
-};
-
-declare global {
-  interface Window {
-    MercadoPago: any;
-  }
-}
-
-export const ResumeForm = () => {
-  useSetInitialStore();
-  useSaveStateToLocalStorageOnChange();
-
-  const [isHover, setIsHover] = useState(false);
-  const [qrCode, setQrCode] = useState("");
-  const [pixCode, setPixCode] = useState("");
-  const [copied, setCopied] = useState(false);
-  const [txid, setTxid] = useState("");
-  const [pago, setPago] = useState(false);
-
-  const formsOrder = useAppSelector(selectFormsOrder);
-
-  useEffect(() => {
-    if (!txid) return;
-    const interval = setInterval(async () => {
-      const res = await fetch("https://api-gerencianet.onrender.com/check-payment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ txid }),
-      });
-      const data = await res.json();
-      if (data.paid) {
-        setPago(true);
-        clearInterval(interval);
-      }
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [txid]);
-
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://sdk.mercadopago.com/js/v2";
-    script.async = true;
-    script.onload = async () => {
-      const mp = new window.MercadoPago("TEST-a68b3eed-d102-47d7-89ae-2ca2daea3087");
-      const pref = await fetch("https://api-mercadopago-nqye.onrender.com/criar-preferencia", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-      const { preferenceId } = await pref.json();
-
-      mp.bricks().create("payment", "payment-brick-container", {
-        initialization: {
-          amount: 0.01,
-          preferenceId,
-        },
-        customization: {
-          paymentMethods: {
-            ticket: "all",
-            bankTransfer: "all",
-            pix: "all",
-          },
-        },
-        callbacks: {
-          onReady: () => console.log("💳 Payment Brick carregado"),
-          onSubmit: async ({
-            selectedPaymentMethod,
-            formData,
-          }: {
-            selectedPaymentMethod: string;
-            formData: Record<string, any>;
-          }) => {
-            console.log("🔁 Pagamento submetido:", selectedPaymentMethod, formData);
-          },
-          onError: (error: any) => console.error("❌ Erro no Payment Brick:", error),
-        },
-      });
+// =========================
+// Criar preferência para o Payment Brick (Pix)
+// =========================
+app.post("/criar-preferencia", async (req, res) => {
+  try {
+    const preference = {
+      items: [
+        {
+          title: "Pagamento Currículo",
+          unit_price: 0.01,
+          quantity: 1
+        }
+      ],
+      purpose: "wallet_purchase",
+      notification_url: "https://api-mercadopago-nqye.onrender.com/webhook"
     };
-    document.body.appendChild(script);
-  }, []);
 
-  return (
-    <div
-      className={cx(
-        "flex justify-center scrollbar scrollbar-track-gray-100 scrollbar-w-3 md:h-[calc(100vh-var(--top-nav-bar-height))] md:justify-end md:overflow-y-scroll",
-        isHover && "scrollbar-thumb-gray-200"
-      )}
-      onMouseOver={() => setIsHover(true)}
-      onMouseLeave={() => setIsHover(false)}
-    >
-      <section className="flex flex-col max-w-2xl gap-8 p-[var(--resume-padding)] mb-10">
-        <ProfileForm />
-        {formsOrder.map((form) => {
-          const Component = formTypeToComponent[form];
-          return <Component key={form} />;
-        })}
-        <ThemeForm />
+    const response = await axios.post(
+      "https://api.mercadopago.com/checkout/preferences",
+      preference,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`,
+          "Content-Type": "application/json"
+        }
+      }
+    );
 
-        <div className="flex flex-col items-center gap-4 mt-8">
-          <button
-            onClick={async () => {
-              setCopied(false);
-              setPago(false);
-              setQrCode("");
-              setPixCode("");
-              const res = await fetch("https://api-gerencianet.onrender.com/pagar");
-              const data = await res.json();
-              setQrCode(data.qrCodeBase64);
-              setPixCode(data.pixString);
-              setTxid(data.txid);
-            }}
-            className="bg-gradient-to-r from-pink-500 to-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90"
-          >
-            Gerar PIX
-          </button>
+    res.json({ preferenceId: response.data.id });
+  } catch (err) {
+    console.error("❌ Erro ao criar preferência:", err.response?.data || err.message);
+    res.status(500).json({ erro: "Erro ao criar preferência" });
+  }
+});
 
-          {qrCode && (
-            <div className="text-center">
-              <img src={qrCode} alt="QR Code PIX" className="mx-auto max-w-[260px]" />
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(pixCode);
-                  setCopied(true);
-                }}
-                className="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-              >
-                Copiar código Pix Copia e Cola
-              </button>
-              {copied && (
-                <p className="text-green-600 mt-1">Código copiado com sucesso!</p>
-              )}
-            </div>
-          )}
+// =========================
+// Webhook de notificação (Pix aprovado, etc.)
+// =========================
+app.post("/webhook", (req, res) => {
+  try {
+    const log = `[${new Date().toISOString()}] ${JSON.stringify(req.body)}\n`;
+    fs.appendFileSync("webhook.log", log);
+    console.log("📬 Webhook recebido:", req.body);
 
-          {pago && (
-            <button
-              onClick={downloadCurriculoPDF}
-              className="bg-green-600 text-white font-bold px-5 py-3 mt-4 rounded-lg hover:bg-green-700"
-            >
-              Baixar Currículo
-            </button>
-          )}
+    res.sendStatus(200);
+  } catch (err) {
+    console.error("❌ Erro no webhook:", err.message);
+    res.sendStatus(500);
+  }
+});
 
-          <div id="payment-brick-container" className="w-full mt-6" />
-        </div>
-      </section>
-    </div>
-  );
-};
+// =========================
+// Fallback opcional de verificação de pagamento
+// =========================
+app.post("/check-payment", async (req, res) => {
+  const { id } = req.body;
+  if (!id) return res.status(400).json({ erro: "id do pagamento não informado" });
+
+  try {
+    const response = await axios.get(
+      `https://api.mercadopago.com/v1/payments/${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`
+        }
+      }
+    );
+
+    const pago = response.data.status === "approved";
+    res.json({ paid: pago });
+  } catch (err) {
+    console.error("❌ Erro ao verificar pagamento:", err.response?.data || err.message);
+    res.status(500).json({ erro: "Erro ao verificar pagamento" });
+  }
+});
+
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => {
+  console.log(`✅ API Mercado Pago rodando na porta ${PORT}`);
+});
