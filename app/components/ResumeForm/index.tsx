@@ -66,7 +66,11 @@ export const ResumeForm = () => {
 
         const { amount, email } = await response.json();
 
-        console.log("⚙️ Dados recebidos:", { amount, email });
+        console.log("🧠 DEBUG PARAMS:", {
+          amount,
+          email,
+          entityType: "individual"
+        });
 
         const container = document.getElementById("payment-brick");
         if (container) container.innerHTML = "";
