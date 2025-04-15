@@ -70,10 +70,11 @@ export const ResumeForm = () => {
             amount: 2.0,
             preferenceId,
           },
+          // Colocando paymentMethods fora de customization
+          paymentMethods: {
+            types: ["pix"]
+          },
           customization: {
-            paymentMethods: {
-              types: ["pix"]
-            },
             visual: { style: { theme: "default" } },
           },
           callbacks: {
