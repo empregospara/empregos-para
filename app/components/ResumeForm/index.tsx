@@ -34,7 +34,6 @@ export const ResumeForm = () => {
   const [paid, setPaid] = useState(false);
   const [timeoutExceeded, setTimeoutExceeded] = useState(false);
   const [showStatusScreen, setShowStatusScreen] = useState(false);
-
   const formsOrder = useAppSelector(selectFormsOrder);
 
   const loadMercadoPagoScript = (): Promise<void> => {
@@ -71,8 +70,8 @@ export const ResumeForm = () => {
         const bricksBuilder = mp.bricks();
         bricksBuilder.create("payment", "payment-brick", {
           initialization: {
+            amount: 1,
             preferenceId,
-            amount: 1.0,
           },
           customization: {
             paymentMethods: {
