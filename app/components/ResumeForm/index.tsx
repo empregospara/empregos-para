@@ -73,8 +73,7 @@ export const ResumeForm = () => {
           customization: {
             visual: { style: { theme: "bootstrap" } },
             paymentMethods: {
-              types: ["pix"],
-              maxInstallments: 1,
+              types: ["pix"]
             },
           },
           callbacks: {
