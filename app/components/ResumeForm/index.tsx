@@ -2,7 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { cx } from "@/app/lib/cx";
-import { useAppSelector, useSaveStateToLocalStorageOnChange, useSetInitialStore } from "@/app/lib/redux/hooks";
+import {
+  useAppSelector,
+  useSaveStateToLocalStorageOnChange,
+  useSetInitialStore,
+} from "@/app/lib/redux/hooks";
 import { selectFormsOrder, ShowForm } from "@/app/lib/redux/settingsSlice";
 import { ProfileForm } from "./ProfileForm";
 import { WorkExperiencesForm } from "./WorkExperiencesForm";
@@ -31,12 +35,17 @@ export const ResumeForm = () => {
   const [timeoutExceeded, setTimeoutExceeded] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const MP_PUBLIC_KEY = "APP_USR-761098bf-af6c-4dd1-bb74-354ce46735f0";
+  const MP_PUBLIC_KEY =
+    "APP_USR-761098bf-af6c-4dd1-bb74-354ce46735f0";
   const API_BASE_URL = "https://api-mercadopago-nqye.onrender.com";
 
   const loadScript = () => {
     return new Promise<void>((resolve, reject) => {
-      if (document.querySelector('script[src="https://sdk.mercadopago.com/js/v2"]')) {
+      if (
+        document.querySelector(
+          'script[src="https://sdk.mercadopago.com/js/v2"]'
+        )
+      ) {
         resolve();
         return;
       }
@@ -44,7 +53,8 @@ export const ResumeForm = () => {
       script.src = "https://sdk.mercadopago.com/js/v2";
       script.async = true;
       script.onload = () => resolve();
-      script.onerror = () => reject("Erro ao carregar MercadoPago JS SDK");
+      script.onerror = () =>
+        reject("Erro ao carregar MercadoPago JS SDK");
       document.body.appendChild(script);
     });
   };
@@ -61,34 +71,41 @@ export const ResumeForm = () => {
         const { preferenceId } = await prefRes.json();
         if (!preferenceId) throw new Error("preferenceId ausente");
 
-        const mp = new (window as any).MercadoPago(MP_PUBLIC_KEY, { locale: "pt-BR" });
+        const mp = new (window as any).MercadoPago(MP_PUBLIC_KEY, {
+          locale: "pt-BR",
+        });
         const bricksBuilder = mp.bricks();
 
-        await bricksBuilder.create("payment", "paymentBrick_container", {
-          initialization: {
-            amount: 2.0,
-            preferenceId,
-          },
-          // Configura as opções de pagamento no nível principal
-          paymentMethods: {
-            types: ["pix"]
-          },
-          // Campo extra para reforçar o método padrão
-          defaultPaymentMethodId: "pix",
-          customization: {
-            visual: { style: { theme: "default" } },
-          },
-          callbacks: {
-            onReady: () => console.log("✅ Brick carregado"),
-            onSubmit: ({ formData }: any) => {
-              setPaymentId(formData.payment.id);
-              return Promise.resolve();
+        // Utiliza createPaymentBrick para enviar o payload completo
+        await bricksBuilder.createPaymentBrick({
+          settings: {
+            initialization: {
+              amount: 2.0,
+              preferenceId,
+              productId: "CHQBUNESFQCVF58JFECG", // incluido explicitamente
             },
-            onError: (error: any) => {
-              console.error("❌ Erro no brick:", error);
-              setErrorMessage("Erro ao processar pagamento.");
-            }
-          }
+            paymentMethods: {
+              types: ["pix"],
+            },
+            defaultPaymentMethodId: "pix",
+            customization: {
+              visual: { style: { theme: "default" } },
+            },
+            callbacks: {
+              onReady: () => console.log("✅ Brick carregado"),
+              onSubmit: ({ formData }: any) => {
+                setPaymentId(formData.payment.id);
+                return Promise.resolve();
+              },
+              onError: (error: any) => {
+                console.error("❌ Erro no brick:", error);
+                setErrorMessage("Erro ao processar pagamento.");
+              },
+            },
+          },
+          controller: {
+            container: "paymentBrick_container",
+          },
         });
       } catch (err: any) {
         console.error("❌ Erro ao iniciar Brick:", err.message);
@@ -107,7 +124,6 @@ export const ResumeForm = () => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: paymentId }),
         });
-
         const { paid } = await res.json();
         if (paid) {
           setPaid(true);
@@ -130,7 +146,11 @@ export const ResumeForm = () => {
   }, [paymentId]);
 
   return (
-    <div className={cx("flex justify-center scrollbar scrollbar-track-gray-100 scrollbar-w-3 md:h-[calc(100vh-var(--top-nav-bar-height))] md:justify-end md:overflow-y-scroll")}>
+    <div
+      className={cx(
+        "flex justify-center scrollbar scrollbar-track-gray-100 scrollbar-w-3 md:h-[calc(100vh-var(--top-nav-bar-height))] md:justify-end md:overflow-y-scroll"
+      )}
+    >
       <section className="flex flex-col max-w-2xl gap-8 p-[var(--resume-padding)] mb-10">
         <ProfileForm />
         {formsOrder.map((form) => {
@@ -139,20 +159,32 @@ export const ResumeForm = () => {
         })}
         <ThemeForm />
         <div className="flex flex-col items-center gap-4 mt-8">
-          {errorMessage && <div className="text-red-600">{errorMessage}</div>}
-          {!paid && !timeoutExceeded && <div id="paymentBrick_container" className="w-full min-h-[300px]" />}
+          {errorMessage && (
+            <div className="text-red-600">{errorMessage}</div>
+          )}
+          {!paid && !timeoutExceeded && (
+            <div id="paymentBrick_container" className="w-full min-h-[300px]" />
+          )}
           {timeoutExceeded && (
             <div className="text-red-600 text-center">
               Tempo expirado. Nenhum pagamento foi confirmado.
-              <button onClick={() => window.location.reload()} className="mt-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+              >
                 Gerar novo pagamento
               </button>
             </div>
           )}
           {paid && (
             <>
-              <p className="text-green-600 font-semibold">✅ Pagamento confirmado!</p>
-              <button onClick={downloadCurriculoPDF} className="bg-green-600 text-white font-bold px-5 py-3 rounded-lg hover:bg-green-700">
+              <p className="text-green-600 font-semibold">
+                ✅ Pagamento confirmado!
+              </p>
+              <button
+                onClick={downloadCurriculoPDF}
+                className="bg-green-600 text-white font-bold px-5 py-3 rounded-lg hover:bg-green-700"
+              >
                 Baixar Currículo
               </button>
             </>
