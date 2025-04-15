@@ -61,6 +61,7 @@ export const ResumeForm = () => {
         });
 
         const { preferenceId } = await prefRes.json();
+        if (!preferenceId) throw new Error("preferenceId não retornado");
 
         const mp = new (window as any).MercadoPago(MP_PUBLIC_KEY, { locale: "pt-BR" });
         const bricksBuilder = mp.bricks();
@@ -69,11 +70,18 @@ export const ResumeForm = () => {
           initialization: {
             amount: 2.0,
             preferenceId,
+            payer: {
+              firstName: "",
+              lastName: "",
+              email: "",
+              entityType: "individual",
+            }
           },
           customization: {
             visual: { style: { theme: "bootstrap" } },
             paymentMethods: {
-              types: ["pix"]
+              types: ["pix"],
+              maxInstallments: 1
             },
           },
           callbacks: {
