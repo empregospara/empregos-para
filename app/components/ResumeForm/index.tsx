@@ -54,43 +54,42 @@ export const ResumeForm = () => {
       try {
         await loadScript();
 
-        const response = await fetch(`${API_BASE_URL}/criar-preferencia`, {
+        const prefRes = await fetch(`${API_BASE_URL}/criar-preferencia`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
         });
 
-        const data = await response.json();
-        if (!data.preferenceId) throw new Error("preferenceId ausente");
+        const { preferenceId } = await prefRes.json();
+        if (!preferenceId) throw new Error("preferenceId ausente");
 
         const mp = new (window as any).MercadoPago(MP_PUBLIC_KEY, { locale: "pt-BR" });
         const bricksBuilder = mp.bricks();
 
         await bricksBuilder.create("payment", "paymentBrick_container", {
           initialization: {
-            preferenceId: data.preferenceId,
             amount: 2.0,
+            preferenceId,
           },
           customization: {
             paymentMethods: {
-              types: ["pix"],
+              types: ["pix"]
             },
-            visual: { style: { theme: "bootstrap" } },
+            visual: { style: { theme: "default" } },
           },
           callbacks: {
-            onReady: () => console.log("✅ Brick pronto"),
+            onReady: () => console.log("✅ Brick carregado"),
             onSubmit: ({ formData }: any) => {
-              if (formData?.payment?.id) {
-                setPaymentId(formData.payment.id);
-              }
+              setPaymentId(formData.payment.id);
               return Promise.resolve();
             },
             onError: (error: any) => {
-              console.error("Erro no brick:", error);
-              setErrorMessage("Erro no pagamento. Tente novamente.");
-            },
-          },
+              console.error("❌ Erro no brick:", error);
+              setErrorMessage("Erro ao processar pagamento.");
+            }
+          }
         });
       } catch (err: any) {
+        console.error("❌ Erro ao iniciar Brick:", err.message);
         setErrorMessage(err.message || "Erro inesperado");
       }
     })();
@@ -98,6 +97,7 @@ export const ResumeForm = () => {
 
   useEffect(() => {
     if (!paymentId) return;
+
     const interval = setInterval(async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/check-payment`, {
@@ -112,7 +112,7 @@ export const ResumeForm = () => {
           clearInterval(interval);
         }
       } catch (err) {
-        console.error("Erro ao verificar status:", err);
+        console.error("❌ Erro ao verificar pagamento:", err);
       }
     }, 5000);
 
@@ -142,7 +142,9 @@ export const ResumeForm = () => {
           {timeoutExceeded && (
             <div className="text-red-600 text-center">
               Tempo expirado. Nenhum pagamento foi confirmado.
-              <button onClick={() => window.location.reload()} className="mt-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Gerar novo pagamento</button>
+              <button onClick={() => window.location.reload()} className="mt-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                Gerar novo pagamento
+              </button>
             </div>
           )}
           {paid && (
