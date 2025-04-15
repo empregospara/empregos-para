@@ -30,10 +30,12 @@ export const ResumeForm = () => {
   useSaveStateToLocalStorageOnChange();
 
   const [isHover, setIsHover] = useState(false);
+  const [email, setEmail] = useState("");
   const [paymentId, setPaymentId] = useState<string>("");
   const [paid, setPaid] = useState(false);
   const [timeoutExceeded, setTimeoutExceeded] = useState(false);
   const [showStatusScreen, setShowStatusScreen] = useState(false);
+  const [showPaymentBrick, setShowPaymentBrick] = useState(false);
 
   const formsOrder = useAppSelector(selectFormsOrder);
 
@@ -52,77 +54,70 @@ export const ResumeForm = () => {
     });
   };
 
-  useEffect(() => {
-    const initPaymentBrick = async () => {
-      try {
-        await loadMercadoPagoScript();
+  const iniciarPagamento = async () => {
+    if (!email || !email.includes("@")) {
+      alert("Digite um e-mail válido.");
+      return;
+    }
 
-        // Espera ativa por window.MercadoPago
-        while (!(window as any).MercadoPago) {
-          await new Promise((r) => setTimeout(r, 50));
-        }
-
-        const response = await fetch("https://api-mercadopago-nqye.onrender.com/criar-preferencia", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-        });
-
-        if (!response.ok) throw new Error("Erro na requisição ao backend");
-
-        const { amount, email } = await response.json();
-
-        console.log("🧠 DEBUG PARAMS:", {
-          amount,
-          email,
-          entityType: "individual"
-        });
-
-        const container = document.getElementById("payment-brick");
-        console.log("🧱 #payment-brick existe?", container);
-
-        if (!container) {
-          console.error("❌ Container #payment-brick não encontrado. Abortando.");
-          return;
-        }
-
-        container.innerHTML = "";
-
-        const mp = new (window as any).MercadoPago("APP_USR-761098bf-af6c-4dd1-bb74-354ce46735f0");
-        const bricksBuilder = mp.bricks();
-
-        await bricksBuilder.create("payment", "payment-brick", {
-          initialization: {
-            amount,
-            payer: {
-              email,
-              entityType: "individual",
-            },
-          },
-          customization: {
-            paymentMethods: {
-              defaultPaymentMethodId: "pix",
-              types: ["pix"],
-            },
-          },
-          callbacks: {
-            onReady: () => console.log("💳 Payment Brick carregado"),
-            onSubmit: async ({ formData }: any) => {
-              if (formData?.payment?.id) {
-                setPaymentId(formData.payment.id);
-                setShowStatusScreen(true);
-                setTimeoutExceeded(false);
-              }
-            },
-            onError: (error: any) => console.error("❌ Erro no Payment Brick:", error),
-          },
-        });
-      } catch (error) {
-        console.error("❌ Erro ao inicializar Payment Brick:", error);
+    try {
+      await loadMercadoPagoScript();
+      while (!(window as any).MercadoPago) {
+        await new Promise((r) => setTimeout(r, 50));
       }
-    };
 
-    initPaymentBrick();
-  }, []);
+      const res = await fetch("https://api-mercadopago-nqye.onrender.com/criar-preferencia", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!res.ok) throw new Error("Erro ao gerar preferência");
+      const { amount } = await res.json();
+
+      const container = document.getElementById("payment-brick");
+      if (!container) {
+        console.error("❌ #payment-brick não encontrado.");
+        return;
+      }
+
+      container.innerHTML = "";
+
+      const mp = new (window as any).MercadoPago("APP_USR-761098bf-af6c-4dd1-bb74-354ce46735f0");
+      const bricksBuilder = mp.bricks();
+
+      await bricksBuilder.create("payment", "payment-brick", {
+        initialization: {
+          amount,
+          payer: {
+            email,
+            entityType: "individual",
+          },
+        },
+        customization: {
+          paymentMethods: {
+            defaultPaymentMethodId: "pix",
+            types: ["pix"],
+          },
+        },
+        callbacks: {
+          onReady: () => console.log("💳 Payment Brick carregado"),
+          onSubmit: async ({ formData }: any) => {
+            if (formData?.payment?.id) {
+              setPaymentId(formData.payment.id);
+              setShowStatusScreen(true);
+              setTimeoutExceeded(false);
+            }
+          },
+          onError: (error: any) => console.error("❌ Erro no Payment Brick:", error),
+        },
+      });
+
+      setShowPaymentBrick(true);
+    } catch (err) {
+      console.error("Erro ao iniciar pagamento:", err);
+    }
+  };
 
   useEffect(() => {
     if (!paymentId) return;
@@ -196,6 +191,23 @@ export const ResumeForm = () => {
         <div className="flex flex-col items-center gap-4 mt-8">
           {!paid && !timeoutExceeded && (
             <>
+              {!showPaymentBrick && (
+                <div className="w-full">
+                  <input
+                    type="email"
+                    className="w-full px-4 py-2 border rounded mb-2"
+                    placeholder="Digite seu e-mail"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                  <button
+                    onClick={iniciarPagamento}
+                    className="bg-blue-600 text-white px-5 py-2 rounded hover:bg-blue-700 w-full"
+                  >
+                    Pagar com Pix
+                  </button>
+                </div>
+              )}
               <div id="payment-brick" className="w-full" />
               {showStatusScreen && <div id="status-screen-brick" className="w-full" />}
             </>
