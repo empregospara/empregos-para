@@ -99,7 +99,7 @@ export const ResumeForm = () => {
             onError: (error: any) => console.error("❌ Erro no Payment Brick:", error),
           },
         });
-      } catch (error) {
+      } catch (error: Error) {
         console.error("Erro ao iniciar brick:", error);
         setErrorMessage(error.message || "Erro ao iniciar o pagamento.");
       }
@@ -122,7 +122,7 @@ export const ResumeForm = () => {
           setPaid(true);
           clearInterval(interval);
         }
-      } catch (error) {
+      } catch (error: Error) {
         console.error("Erro ao verificar pagamento:", error);
       }
     }, 5000);
@@ -154,7 +154,7 @@ export const ResumeForm = () => {
             onError: (error: any) => console.error("❌ Erro no Status Screen Brick:", error),
           },
         });
-      } catch (error) {
+      } catch (error: Error) {
         console.error("Erro ao iniciar status screen:", error);
       }
     };
