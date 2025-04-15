@@ -69,11 +69,6 @@ export const ResumeForm = () => {
           initialization: {
             amount: 2.0,
             preferenceId,
-            payer: {
-              firstName: "",
-              lastName: "",
-              email: "",
-            },
           },
           customization: {
             visual: { style: { theme: "bootstrap" } },
