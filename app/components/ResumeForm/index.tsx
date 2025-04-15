@@ -43,7 +43,6 @@ export const ResumeForm = () => {
       console.log("📜 [MP Script] Iniciando carregamento do script do Mercado Pago");
       if (document.querySelector('script[src="https://sdk.mercadopago.com/js/v2"]')) {
         console.log("📜 [MP Script] Script já presente no DOM");
-        // Aguarda até que MercadoPago esteja disponível
         const checkMercadoPago = setInterval(() => {
           if ((window as any).MercadoPago) {
             console.log("📜 [MP Script] MercadoPago disponível");
@@ -83,15 +82,25 @@ export const ResumeForm = () => {
         console.log("✅ [Payment Brick] Script do Mercado Pago carregado");
 
         console.log("📡 [Payment Brick] Enviando requisição para criar preferência");
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => {
+          controller.abort();
+          console.error("📡 [Payment Brick] Timeout: Requisição para criar preferência demorou demais");
+        }, 10000); // Timeout de 10 segundos
+
         const response = await fetch("https://api-mercadopago-nqye.onrender.com/criar-preferencia", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          // Não envia amount, pois o valor é fixo no servidor
+          signal: controller.signal,
         });
 
+        clearTimeout(timeoutId);
         console.log("📡 [Payment Brick] Resposta recebida:", response.status, response.statusText);
+
         if (!response.ok) {
-          throw new Error(`Erro ao buscar preferência: ${response.status} ${response.statusText}`);
+          const errorText = await response.text();
+          console.error("📡 [Payment Brick] Erro na resposta:", errorText);
+          throw new Error(`Erro ao buscar preferência: ${response.status} ${response.statusText} - ${errorText}`);
         }
 
         const data = await response.json();
@@ -120,7 +129,7 @@ export const ResumeForm = () => {
           },
           customization: {
             paymentMethods: {
-              types: ["pix"], // Apenas Pix visível
+              types: ["pix"],
             },
           },
           callbacks: {
