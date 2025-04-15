@@ -58,17 +58,10 @@ export const ResumeForm = () => {
       try {
         await loadMercadoPagoScript();
 
-        // Definir o valor do pagamento (exemplo: 100 centavos = R$1,00)
-        const amount = 100; // Ajuste este valor conforme necessário
-
-        if (amount <= 0) {
-          throw new Error("O valor do pagamento deve ser maior que zero.");
-        }
-
         const response = await fetch("https://api-mercadopago-nqye.onrender.com/criar-preferencia", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ amount }), // Enviar o valor no corpo da requisição
+          // Não envia amount, pois o valor é fixo no servidor
         });
 
         if (!response.ok) throw new Error("Erro ao buscar preferência");
@@ -99,9 +92,10 @@ export const ResumeForm = () => {
             onError: (error: any) => console.error("❌ Erro no Payment Brick:", error),
           },
         });
-      } catch (error: Error) {
+      } catch (error: unknown) {
         console.error("Erro ao iniciar brick:", error);
-        setErrorMessage(error.message || "Erro ao iniciar o pagamento.");
+        const message = error instanceof Error ? error.message : "Erro desconhecido";
+        setErrorMessage(message || "Erro ao iniciar o pagamento.");
       }
     };
 
@@ -122,7 +116,7 @@ export const ResumeForm = () => {
           setPaid(true);
           clearInterval(interval);
         }
-      } catch (error: Error) {
+      } catch (error: unknown) {
         console.error("Erro ao verificar pagamento:", error);
       }
     }, 5000);
@@ -154,7 +148,7 @@ export const ResumeForm = () => {
             onError: (error: any) => console.error("❌ Erro no Status Screen Brick:", error),
           },
         });
-      } catch (error: Error) {
+      } catch (error: unknown) {
         console.error("Erro ao iniciar status screen:", error);
       }
     };
