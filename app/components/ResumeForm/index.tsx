@@ -9,14 +9,14 @@ import {
 } from "@/app/lib/redux/hooks";
 import { selectFormsOrder, ShowForm } from "@/app/lib/redux/settingsSlice";
 
-// Ajuste nos caminhos – utilizando alias para apontar para "app/components/ResumeForm"
-import { ProfileForm } from "@/components/ResumeForm/ProfileForm";
-import { WorkExperiencesForm } from "@/components/ResumeForm/WorkExperiencesForm";
-import { EducationsForm } from "@/components/ResumeForm/EducationsForm";
-import { ProjectsForm } from "@/components/ResumeForm/ProjectsForm";
-import { SkillsForm } from "@/components/ResumeForm/SkillsForm";
-import { CustomForm } from "@/components/ResumeForm/CustomForm";
-import { ThemeForm } from "@/components/ResumeForm/ThemeForm";
+// Ajustando os imports para incluir "app/" no caminho, conforme a estrutura real:
+import { ProfileForm } from "@/app/components/ResumeForm/ProfileForm";
+import { WorkExperiencesForm } from "@/app/components/ResumeForm/WorkExperiencesForm";
+import { EducationsForm } from "@/app/components/ResumeForm/EducationsForm";
+import { ProjectsForm } from "@/app/components/ResumeForm/ProjectsForm";
+import { SkillsForm } from "@/app/components/ResumeForm/SkillsForm";
+import { CustomForm } from "@/app/components/ResumeForm/CustomForm";
+import { ThemeForm } from "@/app/components/ResumeForm/ThemeForm";
 
 import { downloadCurriculoPDF } from "@/app/lib/downloadCurriculoPDF";
 
@@ -38,10 +38,10 @@ export const ResumeForm = () => {
   const [timeoutExceeded, setTimeoutExceeded] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const MP_PUBLIC_KEY = "APP_USR-761098bf-af6c-4dd1-bb74-354ce46735f0";
+  const MP_PUBLIC_KEY =
+    "APP_USR-761098bf-af6c-4dd1-bb74-354ce46735f0";
   const API_BASE_URL = "https://api-mercadopago-nqye.onrender.com";
 
-  // Função para carregar o SDK do Mercado Pago apenas uma vez.
   const loadScript = () => {
     return new Promise<void>((resolve, reject) => {
       if (
@@ -67,7 +67,6 @@ export const ResumeForm = () => {
       try {
         await loadScript();
 
-        // Cria a preferência no backend.
         const prefRes = await fetch(`${API_BASE_URL}/criar-preferencia`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -80,9 +79,7 @@ export const ResumeForm = () => {
         });
         const bricksBuilder = mp.bricks();
 
-        // Utiliza o método create(), que é suportado na versão atual do SDK.
-        // Incluímos o productId explicitamente para alinhar com a URL de inicialização.
-        // Removemos as configurações de paymentMethods para que a preferência do backend restrinja os métodos a somente PIX.
+        // Utiliza o método create(), enviando o productId explicitamente.
         await bricksBuilder.create("payment", "paymentBrick_container", {
           initialization: {
             amount: 2.0,
@@ -114,7 +111,6 @@ export const ResumeForm = () => {
   useEffect(() => {
     if (!paymentId) return;
 
-    // Polling para checar o status do pagamento a cada 5 segundos.
     const interval = setInterval(async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/check-payment`, {
@@ -132,7 +128,6 @@ export const ResumeForm = () => {
       }
     }, 5000);
 
-    // Timeout de 10 minutos.
     const timeout = setTimeout(() => {
       setTimeoutExceeded(true);
       clearInterval(interval);
@@ -145,7 +140,11 @@ export const ResumeForm = () => {
   }, [paymentId]);
 
   return (
-    <div className={cx("flex justify-center scrollbar scrollbar-track-gray-100 scrollbar-w-3 md:h-[calc(100vh-var(--top-nav-bar-height))] md:justify-end md:overflow-y-scroll")}>
+    <div
+      className={cx(
+        "flex justify-center scrollbar scrollbar-track-gray-100 scrollbar-w-3 md:h-[calc(100vh-var(--top-nav-bar-height))] md:justify-end md:overflow-y-scroll"
+      )}
+    >
       <section className="flex flex-col max-w-2xl gap-8 p-[var(--resume-padding)] mb-10">
         <ProfileForm />
         {formsOrder.map((form) => {
@@ -154,7 +153,9 @@ export const ResumeForm = () => {
         })}
         <ThemeForm />
         <div className="flex flex-col items-center gap-4 mt-8">
-          {errorMessage && <div className="text-red-600">{errorMessage}</div>}
+          {errorMessage && (
+            <div className="text-red-600">{errorMessage}</div>
+          )}
           {!paid && !timeoutExceeded && (
             <div id="paymentBrick_container" className="w-full min-h-[300px]" />
           )}
