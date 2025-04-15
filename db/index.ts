@@ -8,13 +8,16 @@ import {
   useSetInitialStore,
 } from "@/app/lib/redux/hooks";
 import { selectFormsOrder, ShowForm } from "@/app/lib/redux/settingsSlice";
-import { ProfileForm } from "./ProfileForm";
-import { WorkExperiencesForm } from "./WorkExperiencesForm";
-import { EducationsForm } from "./EducationsForm";
-import { ProjectsForm } from "./ProjectsForm";
-import { SkillsForm } from "./SkillsForm";
-import { CustomForm } from "./CustomForm";
-import { ThemeForm } from "./ThemeForm";
+
+// Imports atualizados para incluir "app/" conforme sua estrutura real:
+import { ProfileForm } from "@/app/components/ResumeForm/ProfileForm";
+import { WorkExperiencesForm } from "@/app/components/ResumeForm/WorkExperiencesForm";
+import { EducationsForm } from "@/app/components/ResumeForm/EducationsForm";
+import { ProjectsForm } from "@/app/components/ResumeForm/ProjectsForm";
+import { SkillsForm } from "@/app/components/ResumeForm/SkillsForm";
+import { CustomForm } from "@/app/components/ResumeForm/CustomForm";
+import { ThemeForm } from "@/app/components/ResumeForm/ThemeForm";
+
 import { downloadCurriculoPDF } from "@/app/lib/downloadCurriculoPDF";
 
 const formTypeToComponent: { [type in ShowForm]: () => JSX.Element } = {
@@ -35,9 +38,11 @@ export const ResumeForm = () => {
   const [timeoutExceeded, setTimeoutExceeded] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const MP_PUBLIC_KEY = "APP_USR-761098bf-af6c-4dd1-bb74-354ce46735f0";
+  const MP_PUBLIC_KEY =
+    "APP_USR-761098bf-af6c-4dd1-bb74-354ce46735f0";
   const API_BASE_URL = "https://api-mercadopago-nqye.onrender.com";
 
+  // Função para carregar o SDK do Mercado Pago apenas uma vez.
   const loadScript = () => {
     return new Promise<void>((resolve, reject) => {
       if (
@@ -63,6 +68,7 @@ export const ResumeForm = () => {
       try {
         await loadScript();
 
+        // Cria a preferência chamando o endpoint do backend.
         const prefRes = await fetch(`${API_BASE_URL}/criar-preferencia`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -75,15 +81,15 @@ export const ResumeForm = () => {
         });
         const bricksBuilder = mp.bricks();
 
-        // Configuração via create() apenas; confiamos na preferência do backend para restringir a PIX.
+        // Utiliza o método create() para inicializar o Payment Brick.
         await bricksBuilder.create("payment", "paymentBrick_container", {
           initialization: {
             amount: 2.0,
             preferenceId,
             productId: "CHQBUNESFQCVF58JFECG", // Incluído explicitamente
           },
-          // Removemos paymentMethods e defaultPaymentMethodId,
-          // pois a preferência (no backend) já garante que somente o PIX está disponível.
+          // Removemos paymentMethods e defaultPaymentMethodId, confiando que a
+          // preferência no backend limita os métodos disponíveis para PIX.
           customization: {
             visual: { style: { theme: "default" } },
           },
@@ -151,9 +157,7 @@ export const ResumeForm = () => {
         })}
         <ThemeForm />
         <div className="flex flex-col items-center gap-4 mt-8">
-          {errorMessage && (
-            <div className="text-red-600">{errorMessage}</div>
-          )}
+          {errorMessage && <div className="text-red-600">{errorMessage}</div>}
           {!paid && !timeoutExceeded && (
             <div id="paymentBrick_container" className="w-full min-h-[300px]" />
           )}
