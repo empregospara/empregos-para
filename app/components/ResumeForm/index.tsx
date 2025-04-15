@@ -28,7 +28,6 @@ export const ResumeForm = () => {
   const formsOrder = useAppSelector(selectFormsOrder);
   const [paymentId, setPaymentId] = useState("");
   const [paid, setPaid] = useState(false);
-  const [showStatusScreen, setShowStatusScreen] = useState(false);
   const [timeoutExceeded, setTimeoutExceeded] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -55,53 +54,35 @@ export const ResumeForm = () => {
       try {
         await loadScript();
 
-        const prefRes = await fetch(`${API_BASE_URL}/criar-pagamento`, {
+        const response = await fetch(`${API_BASE_URL}/criar-preferencia`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
         });
 
-        const { preferenceId } = await prefRes.json();
-        if (!preferenceId) throw new Error("preferenceId ausente");
+        const data = await response.json();
+        if (!data.preferenceId) throw new Error("preferenceId ausente");
 
         const mp = new (window as any).MercadoPago(MP_PUBLIC_KEY, { locale: "pt-BR" });
         const bricksBuilder = mp.bricks();
 
         await bricksBuilder.create("payment", "paymentBrick_container", {
           initialization: {
+            preferenceId: data.preferenceId,
             amount: 2.0,
-            preferenceId,
-            payer: {
-              firstName: "",
-              lastName: "",
-              email: "",
-              entityType: "individual"
-            },
-            defaultPaymentMethodId: "pix"
           },
           customization: {
+            paymentMethods: {
+              types: ["pix"],
+            },
             visual: { style: { theme: "bootstrap" } },
-            paymentMethods: { types: ["pix"] },
           },
           callbacks: {
             onReady: () => console.log("✅ Brick pronto"),
             onSubmit: ({ formData }: any) => {
-              return new Promise((resolve, reject) => {
-                fetch(`${API_BASE_URL}/process_payment`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify(formData),
-                })
-                  .then((res) => res.json())
-                  .then((res) => {
-                    setPaymentId(res.id);
-                    setShowStatusScreen(true);
-                    resolve(res);
-                  })
-                  .catch((err) => {
-                    console.error("Erro no pagamento:", err);
-                    reject(err);
-                  });
-              });
+              if (formData?.payment?.id) {
+                setPaymentId(formData.payment.id);
+              }
+              return Promise.resolve();
             },
             onError: (error: any) => {
               console.error("Erro no brick:", error);
