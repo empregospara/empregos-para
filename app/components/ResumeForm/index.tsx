@@ -56,33 +56,27 @@ export const ResumeForm = () => {
     const initPaymentBrick = async () => {
       try {
         await loadMercadoPagoScript();
-        while (!(window as any).MercadoPago) {
-          await new Promise((r) => setTimeout(r, 50));
-        }
 
-        const res = await fetch("https://api-mercadopago-nqye.onrender.com/criar-preferencia", {
+        const response = await fetch("https://api-mercadopago-nqye.onrender.com/criar-preferencia", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
         });
 
-        if (!res.ok) throw new Error("Erro ao gerar preferência");
-        const { amount } = await res.json();
+        if (!response.ok) throw new Error("Erro ao buscar preferência");
+        const { preferenceId } = await response.json();
 
         const container = document.getElementById("payment-brick");
-        if (!container) {
-          console.error("❌ #payment-brick não encontrado.");
-          return;
-        }
-
-        container.innerHTML = "";
+        if (container) container.innerHTML = "";
 
         const mp = new (window as any).MercadoPago("APP_USR-761098bf-af6c-4dd1-bb74-354ce46735f0");
-        const bricksBuilder = mp.bricks();
-
-        await bricksBuilder.create("payment", "payment-brick", {
+        mp.bricks().create("payment", "payment-brick", {
           initialization: {
-            amount,
-            productId: "pix", // 👈 ESSENCIAL para evitar fallback 400
+            preferenceId,
+          },
+          customization: {
+            paymentMethods: {
+              types: ["pix"], // apenas pix visível
+            },
           },
           callbacks: {
             onReady: () => console.log("💳 Payment Brick carregado"),
@@ -97,7 +91,7 @@ export const ResumeForm = () => {
           },
         });
       } catch (error) {
-        console.error("Erro ao inicializar Payment Brick:", error);
+        console.error("Erro ao iniciar brick:", error);
       }
     };
 
@@ -136,11 +130,13 @@ export const ResumeForm = () => {
 
   useEffect(() => {
     if (!showStatusScreen || !paymentId) return;
+
     const initStatusScreenBrick = async () => {
       try {
         await loadMercadoPagoScript();
-        const statusContainer = document.getElementById("status-screen-brick");
-        if (statusContainer) statusContainer.innerHTML = "";
+        const container = document.getElementById("status-screen-brick");
+        if (container) container.innerHTML = "";
+
         const mp = new (window as any).MercadoPago("APP_USR-761098bf-af6c-4dd1-bb74-354ce46735f0");
         mp.bricks().create("statusScreen", "status-screen-brick", {
           initialization: { paymentId },
@@ -149,7 +145,7 @@ export const ResumeForm = () => {
           },
         });
       } catch (error) {
-        console.error("Erro ao inicializar Status Screen Brick:", error);
+        console.error("Erro ao iniciar status screen:", error);
       }
     };
 
