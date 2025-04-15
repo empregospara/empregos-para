@@ -2,11 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { cx } from "@/app/lib/cx";
-import {
-  useAppSelector,
-  useSaveStateToLocalStorageOnChange,
-  useSetInitialStore,
-} from "@/app/lib/redux/hooks";
+import { useAppSelector, useSaveStateToLocalStorageOnChange, useSetInitialStore } from "@/app/lib/redux/hooks";
 import { selectFormsOrder, ShowForm } from "@/app/lib/redux/settingsSlice";
 import { ProfileForm } from "./ProfileForm";
 import { WorkExperiencesForm } from "./WorkExperiencesForm";
@@ -59,25 +55,32 @@ export const ResumeForm = () => {
       try {
         await loadScript();
 
+        const prefRes = await fetch(`${API_BASE_URL}/criar-preferencia`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        const { preferenceId } = await prefRes.json();
+        if (!preferenceId) throw new Error("preferenceId ausente");
+
         const mp = new (window as any).MercadoPago(MP_PUBLIC_KEY, { locale: "pt-BR" });
         const bricksBuilder = mp.bricks();
 
         await bricksBuilder.create("payment", "paymentBrick_container", {
           initialization: {
             amount: 2.0,
-            preferenceId: "payment_brick_integration_v1",
+            preferenceId,
             payer: {
               firstName: "",
               lastName: "",
               email: "",
               entityType: "individual"
             },
+            defaultPaymentMethodId: "pix"
           },
           customization: {
             visual: { style: { theme: "bootstrap" } },
-            paymentMethods: {
-              types: ["pix"]
-            },
+            paymentMethods: { types: ["pix"] },
           },
           callbacks: {
             onReady: () => console.log("✅ Brick pronto"),
@@ -114,7 +117,6 @@ export const ResumeForm = () => {
 
   useEffect(() => {
     if (!paymentId) return;
-
     const interval = setInterval(async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/check-payment`, {
@@ -159,9 +161,7 @@ export const ResumeForm = () => {
           {timeoutExceeded && (
             <div className="text-red-600 text-center">
               Tempo expirado. Nenhum pagamento foi confirmado.
-              <button onClick={() => window.location.reload()} className="mt-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
-                Gerar novo pagamento
-              </button>
+              <button onClick={() => window.location.reload()} className="mt-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Gerar novo pagamento</button>
             </div>
           )}
           {paid && (
