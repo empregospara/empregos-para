@@ -42,14 +42,17 @@ export const ResumeForm = () => {
   const API_BASE_URL = "https://api-mercadopago-nqye.onrender.com"; // confirme que essa é URL correta de produção
 
   const loadMercadoPagoScript = (): Promise<void> => new Promise((resolve, reject) => {
-    if (document.querySelector('script[src="https://sdk.mercadopago.com/js/v2.0"]')) return resolve();
-    const script = document.createElement("script");
-    script.src = "https://sdk.mercadopago.com/js/v2.0";
-    script.async = true;
-    script.onload = resolve;
-    script.onerror = reject;
-    document.body.appendChild(script);
-  });
+  if (document.querySelector('script[src="https://sdk.mercadopago.com/js/v2.0"]')) {
+    resolve();
+    return;
+  }
+  const script = document.createElement("script");
+  script.src = "https://sdk.mercadopago.com/js/v2.0";
+  script.async = true;
+  script.onload = () => resolve();
+  script.onerror = () => reject(new Error("Falha ao carregar script do Mercado Pago."));
+  document.body.appendChild(script);
+});
 
   useEffect(() => {
     (async () => {
