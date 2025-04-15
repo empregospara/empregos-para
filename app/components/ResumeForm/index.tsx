@@ -61,7 +61,7 @@ export const ResumeForm = () => {
         });
 
         const { preferenceId } = await prefRes.json();
-        if (!preferenceId) throw new Error("preferenceId não retornado");
+        if (!preferenceId) throw new Error("preferenceId ausente");
 
         const mp = new (window as any).MercadoPago(MP_PUBLIC_KEY, { locale: "pt-BR" });
         const bricksBuilder = mp.bricks();
@@ -74,15 +74,11 @@ export const ResumeForm = () => {
               firstName: "",
               lastName: "",
               email: "",
-              entityType: "individual",
-            }
+            },
           },
           customization: {
             visual: { style: { theme: "bootstrap" } },
-            paymentMethods: {
-              types: ["pix"],
-              maxInstallments: 1
-            },
+            paymentMethods: { types: ["pix"] },
           },
           callbacks: {
             onReady: () => console.log("✅ Brick pronto"),
@@ -119,7 +115,6 @@ export const ResumeForm = () => {
 
   useEffect(() => {
     if (!paymentId) return;
-
     const interval = setInterval(async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/check-payment`, {
@@ -150,11 +145,7 @@ export const ResumeForm = () => {
   }, [paymentId]);
 
   return (
-    <div
-      className={cx(
-        "flex justify-center scrollbar scrollbar-track-gray-100 scrollbar-w-3 md:h-[calc(100vh-var(--top-nav-bar-height))] md:justify-end md:overflow-y-scroll"
-      )}
-    >
+    <div className={cx("flex justify-center scrollbar scrollbar-track-gray-100 scrollbar-w-3 md:h-[calc(100vh-var(--top-nav-bar-height))] md:justify-end md:overflow-y-scroll")}>
       <section className="flex flex-col max-w-2xl gap-8 p-[var(--resume-padding)] mb-10">
         <ProfileForm />
         {formsOrder.map((form) => {
@@ -162,28 +153,19 @@ export const ResumeForm = () => {
           return <Component key={form} />;
         })}
         <ThemeForm />
-
         <div className="flex flex-col items-center gap-4 mt-8">
           {errorMessage && <div className="text-red-600">{errorMessage}</div>}
           {!paid && !timeoutExceeded && <div id="paymentBrick_container" className="w-full min-h-[300px]" />}
           {timeoutExceeded && (
             <div className="text-red-600 text-center">
               Tempo expirado. Nenhum pagamento foi confirmado.
-              <button
-                onClick={() => window.location.reload()}
-                className="mt-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-              >
-                Gerar novo pagamento
-              </button>
+              <button onClick={() => window.location.reload()} className="mt-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Gerar novo pagamento</button>
             </div>
           )}
           {paid && (
             <>
               <p className="text-green-600 font-semibold">✅ Pagamento confirmado!</p>
-              <button
-                onClick={downloadCurriculoPDF}
-                className="bg-green-600 text-white font-bold px-5 py-3 rounded-lg hover:bg-green-700"
-              >
+              <button onClick={downloadCurriculoPDF} className="bg-green-600 text-white font-bold px-5 py-3 rounded-lg hover:bg-green-700">
                 Baixar Currículo
               </button>
             </>
