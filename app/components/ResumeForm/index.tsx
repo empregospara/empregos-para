@@ -38,21 +38,23 @@ export const ResumeForm = () => {
 
   const formsOrder = useAppSelector(selectFormsOrder);
 
-  const MP_PUBLIC_KEY = "APP_USR-761098bf-af6c-4dd1-bb74-354ce46735f0"; // sua chave pública de PRODUÇÃO aqui
-  const API_BASE_URL = "https://api-mercadopago-nqye.onrender.com"; // confirme que essa é URL correta de produção
+  const MP_PUBLIC_KEY = "APP_USR-761098bf-af6c-4dd1-bb74-354ce46735f0";
+  const API_BASE_URL = "https://api-mercadopago-nqye.onrender.com";
 
   const loadMercadoPagoScript = (): Promise<void> => new Promise((resolve, reject) => {
-  if (document.querySelector('script[src="https://sdk.mercadopago.com/js/v2.0"]')) {
-    resolve();
-    return;
-  }
-  const script = document.createElement("script");
-  script.src = "https://sdk.mercadopago.com/js/v2.0";
-  script.async = true;
-  script.onload = () => resolve();
-  script.onerror = () => reject(new Error("Falha ao carregar script do Mercado Pago."));
-  document.body.appendChild(script);
-});
+    if (typeof window === 'undefined') return reject(new Error("Janela não disponível."));
+
+    if (document.querySelector('script[src="https://sdk.mercadopago.com/js/v2.0"]')) {
+      resolve();
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://sdk.mercadopago.com/js/v2.0";
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Falha ao carregar script do Mercado Pago."));
+    document.body.appendChild(script);
+  });
 
   useEffect(() => {
     (async () => {
@@ -64,20 +66,18 @@ export const ResumeForm = () => {
           headers: { "Content-Type": "application/json" },
         });
 
-        if (!response.ok) {
-          throw new Error(`Erro ao criar preferência: ${response.statusText}`);
-        }
+        if (!response.ok) throw new Error(`Erro ao criar preferência: ${response.statusText}`);
 
         const { preferenceId } = await response.json();
         if (!preferenceId) throw new Error("PreferenceId não recebido.");
 
         const mp = new (window as any).MercadoPago(MP_PUBLIC_KEY, { locale: "pt-BR" });
-
         const bricksBuilder = mp.bricks();
+
         await bricksBuilder.create("payment", "payment-brick", {
           initialization: {
             preferenceId,
-            amount: 2.0, // valor fixo correspondente ao servidor
+            amount: 2.0,
           },
           customization: {
             paymentMethods: { types: ["pix"] },
@@ -141,7 +141,7 @@ export const ResumeForm = () => {
         await loadMercadoPagoScript();
         const mp = new (window as any).MercadoPago(MP_PUBLIC_KEY, { locale: "pt-BR" });
 
-        mp.bricks().create("statusScreen", "status-screen-brick", {
+        await mp.bricks().create("statusScreen", "status-screen-brick", {
           initialization: { paymentId },
           callbacks: {
             onError: (error: any) => {
