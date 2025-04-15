@@ -58,7 +58,6 @@ export const ResumeForm = () => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
         });
-
         const { preferenceId } = await prefRes.json();
         if (!preferenceId) throw new Error("preferenceId ausente");
 
@@ -70,10 +69,12 @@ export const ResumeForm = () => {
             amount: 2.0,
             preferenceId,
           },
-          // Colocando paymentMethods fora de customization
+          // Configura as opções de pagamento no nível principal
           paymentMethods: {
             types: ["pix"]
           },
+          // Campo extra para reforçar o método padrão
+          defaultPaymentMethodId: "pix",
           customization: {
             visual: { style: { theme: "default" } },
           },
