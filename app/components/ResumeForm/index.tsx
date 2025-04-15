@@ -55,7 +55,7 @@ export const ResumeForm = () => {
       try {
         await loadScript();
 
-        const prefRes = await fetch(`${API_BASE_URL}/criar-preferencia`, {
+        const prefRes = await fetch(`${API_BASE_URL}/criar-pagamento`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
         });
