@@ -34,6 +34,7 @@ export const ResumeForm = () => {
   const [paid, setPaid] = useState(false);
   const [timeoutExceeded, setTimeoutExceeded] = useState(false);
   const [showStatusScreen, setShowStatusScreen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const formsOrder = useAppSelector(selectFormsOrder);
 
@@ -57,9 +58,17 @@ export const ResumeForm = () => {
       try {
         await loadMercadoPagoScript();
 
+        // Definir o valor do pagamento (exemplo: 100 centavos = R$1,00)
+        const amount = 100; // Ajuste este valor conforme necessário
+
+        if (amount <= 0) {
+          throw new Error("O valor do pagamento deve ser maior que zero.");
+        }
+
         const response = await fetch("https://api-mercadopago-nqye.onrender.com/criar-preferencia", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount }), // Enviar o valor no corpo da requisição
         });
 
         if (!response.ok) throw new Error("Erro ao buscar preferência");
@@ -75,7 +84,7 @@ export const ResumeForm = () => {
           },
           customization: {
             paymentMethods: {
-              types: ["pix"], // apenas pix visível
+              types: ["pix"], // Apenas Pix visível
             },
           },
           callbacks: {
@@ -92,6 +101,7 @@ export const ResumeForm = () => {
         });
       } catch (error) {
         console.error("Erro ao iniciar brick:", error);
+        setErrorMessage(error.message || "Erro ao iniciar o pagamento.");
       }
     };
 
@@ -138,70 +148,4 @@ export const ResumeForm = () => {
         if (container) container.innerHTML = "";
 
         const mp = new (window as any).MercadoPago("APP_USR-761098bf-af6c-4dd1-bb74-354ce46735f0");
-        mp.bricks().create("statusScreen", "status-screen-brick", {
-          initialization: { paymentId },
-          callbacks: {
-            onError: (error: any) => console.error("❌ Erro no Status Screen Brick:", error),
-          },
-        });
-      } catch (error) {
-        console.error("Erro ao iniciar status screen:", error);
-      }
-    };
-
-    initStatusScreenBrick();
-  }, [showStatusScreen, paymentId]);
-
-  return (
-    <div
-      className={cx(
-        "flex justify-center scrollbar scrollbar-track-gray-100 scrollbar-w-3 md:h-[calc(100vh-var(--top-nav-bar-height))] md:justify-end md:overflow-y-scroll",
-        isHover && "scrollbar-thumb-gray-200"
-      )}
-      onMouseOver={() => setIsHover(true)}
-      onMouseLeave={() => setIsHover(false)}
-    >
-      <section className="flex flex-col max-w-2xl gap-8 p-[var(--resume-padding)] mb-10">
-        <ProfileForm />
-        {formsOrder.map((form) => {
-          const Component = formTypeToComponent[form];
-          return <Component key={form} />;
-        })}
-        <ThemeForm />
-
-        <div className="flex flex-col items-center gap-4 mt-8">
-          {!paid && !timeoutExceeded && (
-            <>
-              <div id="payment-brick" className="w-full" />
-              {showStatusScreen && <div id="status-screen-brick" className="w-full" />}
-            </>
-          )}
-
-          {timeoutExceeded && (
-            <div className="text-center text-red-600">
-              Tempo expirado. Nenhum pagamento foi confirmado.<br />
-              <button
-                onClick={() => window.location.reload()}
-                className="mt-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-              >
-                Gerar novo pagamento
-              </button>
-            </div>
-          )}
-
-          {paid && (
-            <>
-              <p className="text-green-600 font-semibold">✅ Pagamento confirmado!</p>
-              <button
-                onClick={downloadCurriculoPDF}
-                className="bg-green-600 text-white font-bold px-5 py-3 rounded-lg hover:bg-green-700"
-              >
-                Baixar Currículo
-              </button>
-            </>
-          )}
-        </div>
-      </section>
-    </div>
-  );
-};
+        mp.bricks().create("statusScreen", "status-screen-br
