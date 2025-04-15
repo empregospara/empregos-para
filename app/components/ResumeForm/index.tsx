@@ -70,6 +70,7 @@ export const ResumeForm = () => {
               firstName: "",
               lastName: "",
               email: "",
+              entityType: "individual"
             },
           },
           customization: {
