@@ -82,6 +82,7 @@ export const ResumeForm = () => {
         await bricksBuilder.create("payment", "payment-brick", {
           initialization: {
             amount,
+            productId: "pix", // 👈 ESSENCIAL para evitar fallback 400
           },
           callbacks: {
             onReady: () => console.log("💳 Payment Brick carregado"),
