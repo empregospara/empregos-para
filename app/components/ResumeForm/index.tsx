@@ -9,7 +9,7 @@ import {
 } from "@/app/lib/redux/hooks";
 import { selectFormsOrder, ShowForm } from "@/app/lib/redux/settingsSlice";
 
-// Ajustando os imports para incluir "app/" no caminho, conforme a estrutura real:
+// Ajustando os imports para refletir sua estrutura real (incluir "app/")
 import { ProfileForm } from "@/app/components/ResumeForm/ProfileForm";
 import { WorkExperiencesForm } from "@/app/components/ResumeForm/WorkExperiencesForm";
 import { EducationsForm } from "@/app/components/ResumeForm/EducationsForm";
@@ -42,7 +42,8 @@ export const ResumeForm = () => {
     "APP_USR-761098bf-af6c-4dd1-bb74-354ce46735f0";
   const API_BASE_URL = "https://api-mercadopago-nqye.onrender.com";
 
-  const loadScript = () => {
+  // Função para carregar o SDK do Mercado Pago somente uma vez.
+  const loadScript = (): Promise<void> => {
     return new Promise<void>((resolve, reject) => {
       if (
         document.querySelector(
@@ -67,6 +68,7 @@ export const ResumeForm = () => {
       try {
         await loadScript();
 
+        // Chama o endpoint do backend para criar a preferência
         const prefRes = await fetch(`${API_BASE_URL}/criar-preferencia`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -79,12 +81,14 @@ export const ResumeForm = () => {
         });
         const bricksBuilder = mp.bricks();
 
-        // Utiliza o método create(), enviando o productId explicitamente.
+        // Inicializa o Payment Brick usando o método create(). 
+        // Apenas enviamos initialization com amount, preferenceId e productId,
+        // confiando que a preferência no backend já está restrita para PIX.
         await bricksBuilder.create("payment", "paymentBrick_container", {
           initialization: {
             amount: 2.0,
             preferenceId,
-            productId: "CHQBUNESFQCVF58JFECG",
+            productId: "CHQBUNESFQCVF58JFECG", // Incluído explicitamente
           },
           customization: {
             visual: { style: { theme: "default" } },
@@ -111,6 +115,7 @@ export const ResumeForm = () => {
   useEffect(() => {
     if (!paymentId) return;
 
+    // Polling para verificar o status do pagamento a cada 5 segundos.
     const interval = setInterval(async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/check-payment`, {
@@ -128,6 +133,7 @@ export const ResumeForm = () => {
       }
     }, 5000);
 
+    // Timeout de 10 minutos para encerrar o polling.
     const timeout = setTimeout(() => {
       setTimeoutExceeded(true);
       clearInterval(interval);
